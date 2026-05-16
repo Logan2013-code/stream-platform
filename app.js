@@ -1,5 +1,5 @@
 // ==================== CONFIG ====================
-const TWITCH_CLIENT_ID = 'your_client_id_here'; // Vervang met je Twitch App Client ID
+const TWITCH_CLIENT_ID = '2l6my3eh5ykvp352o18wvm6txvc5zn';
 const REDIRECT_URI = window.location.origin + window.location.pathname;
 const PARENT_DOMAINS = ['logan2013-code.github.io', 'localhost', '127.0.0.1'];
 const STORAGE_KEY = 'neonstream_data';
