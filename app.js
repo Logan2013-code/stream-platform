@@ -1,6 +1,6 @@
 // ==================== CONFIG ====================
 const TWITCH_CLIENT_ID = '2l6my3eh5ykvp352o18wvm6txvc5zn';
-const REDIRECT_URI = window.location.origin + window.location.pathname;
+const REDIRECT_URI = 'https://logan2013-code.github.io/stream-platform/';
 const PARENT_DOMAINS = ['logan2013-code.github.io', 'localhost', '127.0.0.1'];
 const STORAGE_KEY = 'neonstream_data';
 const ACCOUNTS_KEY = 'neonstream_accounts';
@@ -82,12 +82,6 @@ function checkAuth() {
 function loginWithTwitch() {
     const scopes = 'chat:read+chat:edit+user:read:email';
     const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${TWITCH_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=${scopes}`;
-
-    if (TWITCH_CLIENT_ID === 'your_client_id_here') {
-        showNotification('Twitch Client ID niet ingesteld. Gebruik lokaal account of stel je Client ID in.', 'info');
-        return;
-    }
-
     window.location.href = authUrl;
 }
 
@@ -122,15 +116,20 @@ function handleLogin(e) {
     const username = document.getElementById('loginUsername').value.trim();
     const password = document.getElementById('loginPassword').value;
 
+    if (!username || !password) {
+        alert('Vul gebruikersnaam en wachtwoord in.');
+        return;
+    }
+
     const accounts = JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '{}');
 
     if (!accounts[username]) {
-        showNotification('Account niet gevonden. Registreer eerst.', 'info');
+        alert('Account niet gevonden. Registreer eerst.');
         return;
     }
 
     if (accounts[username].password !== btoa(password)) {
-        showNotification('Onjuist wachtwoord.', 'info');
+        alert('Onjuist wachtwoord.');
         return;
     }
 
@@ -138,7 +137,6 @@ function handleLogin(e) {
     state.loggedIn = true;
     saveState();
     showApp();
-    showNotification(`Welkom terug, ${username}!`, 'success');
 }
 
 function handleRegister(e) {
@@ -148,20 +146,25 @@ function handleRegister(e) {
     const password = document.getElementById('regPassword').value;
     const confirm = document.getElementById('regPasswordConfirm').value;
 
+    if (!username || !email || !password) {
+        alert('Vul alle velden in.');
+        return;
+    }
+
     if (password !== confirm) {
-        showNotification('Wachtwoorden komen niet overeen.', 'info');
+        alert('Wachtwoorden komen niet overeen.');
         return;
     }
 
     if (password.length < 6) {
-        showNotification('Wachtwoord moet minimaal 6 tekens zijn.', 'info');
+        alert('Wachtwoord moet minimaal 6 tekens zijn.');
         return;
     }
 
     const accounts = JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '{}');
 
     if (accounts[username]) {
-        showNotification('Gebruikersnaam al bezet.', 'info');
+        alert('Gebruikersnaam al bezet. Kies een andere.');
         return;
     }
 
@@ -172,7 +175,6 @@ function handleRegister(e) {
     state.loggedIn = true;
     saveState();
     showApp();
-    showNotification(`Account aangemaakt! Welkom, ${username}!`, 'success');
 }
 
 function logout() {
