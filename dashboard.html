@@ -30,14 +30,14 @@
 
     <main class="dashboard-page">
         <div class="dashboard-header">
-            <h1><i class="fas fa-tachometer-alt"></i> Stream Dashboard</h1>
-            <p>Beheer je stream, bekijk analytics en control room</p>
+            <h1><i class="fas fa-tachometer-alt"></i> Stream Command Center</h1>
+            <p>Volledige controle over je stream, analytics, alerts en meer</p>
         </div>
 
         <!-- Top Controls -->
         <div class="dash-controls">
             <div class="dash-control-card">
-                <h3>Stream Controls</h3>
+                <h3><i class="fas fa-satellite-dish"></i> Stream Controls</h3>
                 <div class="control-buttons">
                     <button class="ctrl-btn go-live" id="dashGoLive" onclick="dashToggleStream()">
                         <i class="fas fa-broadcast-tower"></i> Go Live
@@ -47,6 +47,9 @@
                     </button>
                     <button class="ctrl-btn" onclick="dashShareScreen()">
                         <i class="fas fa-desktop"></i> Scherm Delen
+                    </button>
+                    <button class="ctrl-btn" onclick="dashClip()">
+                        <i class="fas fa-cut"></i> Clip
                     </button>
                 </div>
                 <div class="stream-title-edit">
@@ -64,12 +67,23 @@
                         <option>IRL</option>
                         <option>Esports</option>
                         <option>Education</option>
+                        <option>Software & Game Dev</option>
                     </select>
+                </div>
+                <div class="stream-tags-edit">
+                    <label>Tags</label>
+                    <div class="tag-input-wrap">
+                        <div class="tag-list" id="dashTags">
+                            <span class="stream-tag">Nederlands <i class="fas fa-times" onclick="removeTag(this)"></i></span>
+                            <span class="stream-tag">Gaming <i class="fas fa-times" onclick="removeTag(this)"></i></span>
+                        </div>
+                        <input type="text" id="dashTagInput" placeholder="Tag toevoegen..." onkeydown="if(event.key==='Enter')addTag()">
+                    </div>
                 </div>
             </div>
 
             <div class="dash-control-card">
-                <h3>Quick Stats</h3>
+                <h3><i class="fas fa-chart-line"></i> Live Stats</h3>
                 <div class="quick-stats">
                     <div class="qs-item">
                         <span class="qs-value" id="dashViewers">0</span>
@@ -87,21 +101,29 @@
                         <span class="qs-value" id="dashUptime">00:00</span>
                         <span class="qs-label">Uptime</span>
                     </div>
+                    <div class="qs-item">
+                        <span class="qs-value" id="dashPeakViewers">0</span>
+                        <span class="qs-label">Peak</span>
+                    </div>
+                    <div class="qs-item">
+                        <span class="qs-value" id="dashRevenue">€0</span>
+                        <span class="qs-label">Revenue</span>
+                    </div>
                 </div>
             </div>
 
             <div class="dash-control-card">
-                <h3>Stream Health</h3>
+                <h3><i class="fas fa-heartbeat"></i> Stream Health</h3>
                 <div class="health-indicators">
                     <div class="health-item">
                         <span class="health-dot green"></span>
                         <span>Bitrate</span>
-                        <strong>6000 kbps</strong>
+                        <strong id="healthBitrate">6000 kbps</strong>
                     </div>
                     <div class="health-item">
                         <span class="health-dot green"></span>
                         <span>FPS</span>
-                        <strong>60</strong>
+                        <strong id="healthFps">60</strong>
                     </div>
                     <div class="health-item">
                         <span class="health-dot green"></span>
@@ -111,8 +133,21 @@
                     <div class="health-item">
                         <span class="health-dot yellow"></span>
                         <span>CPU</span>
-                        <strong>45%</strong>
+                        <strong id="healthCpu">45%</strong>
                     </div>
+                    <div class="health-item">
+                        <span class="health-dot green"></span>
+                        <span>RAM</span>
+                        <strong id="healthRam">62%</strong>
+                    </div>
+                    <div class="health-item">
+                        <span class="health-dot green"></span>
+                        <span>Dropped Frames</span>
+                        <strong id="healthDropped">0</strong>
+                    </div>
+                </div>
+                <div class="health-graph-mini">
+                    <canvas id="healthGraph" width="300" height="60"></canvas>
                 </div>
             </div>
         </div>
@@ -124,37 +159,108 @@
                 <div class="preview-container">
                     <div id="dashTwitchEmbed"></div>
                 </div>
+                <div class="preview-toolbar">
+                    <button onclick="dashClip()"><i class="fas fa-cut"></i> Maak Clip</button>
+                    <button onclick="dashMarker()"><i class="fas fa-map-marker-alt"></i> Marker</button>
+                    <button onclick="dashAd()"><i class="fas fa-ad"></i> Ad Break</button>
+                    <button onclick="dashRaid()"><i class="fas fa-users"></i> Raid</button>
+                </div>
             </div>
 
             <div class="dash-chat">
                 <h3><i class="fas fa-comments"></i> Chat</h3>
                 <div class="dash-chat-embed" id="dashChatEmbed"></div>
+                <div class="chat-quick-actions">
+                    <button onclick="sendQuickChat('Welkom bij de stream! 👋')"><i class="fas fa-hand-wave"></i></button>
+                    <button onclick="sendQuickChat('Bedankt voor de follow! 💜')"><i class="fas fa-heart"></i></button>
+                    <button onclick="sendQuickChat('GG! 🏆')"><i class="fas fa-trophy"></i></button>
+                    <button onclick="sendQuickChat('Vergeet niet te volgen! ✨')"><i class="fas fa-star"></i></button>
+                </div>
             </div>
         </div>
 
-        <!-- Activity Feed + Alerts -->
+        <!-- Analytics Section -->
+        <div class="dash-analytics">
+            <div class="analytics-card">
+                <h3><i class="fas fa-chart-area"></i> Kijkers Grafiek</h3>
+                <canvas id="viewerGraph" width="600" height="200"></canvas>
+            </div>
+            <div class="analytics-card">
+                <h3><i class="fas fa-clock"></i> Stream Timeline</h3>
+                <div class="timeline-markers" id="timelineMarkers">
+                    <div class="timeline-bar">
+                        <div class="timeline-progress" id="timelineProgress"></div>
+                    </div>
+                    <div class="timeline-events" id="timelineEvents"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Feed + Alerts + Hype Train -->
         <div class="dash-bottom">
             <div class="dash-activity">
                 <h3><i class="fas fa-bell"></i> Activiteit Feed</h3>
+                <div class="activity-filter">
+                    <button class="af-btn active" onclick="filterActivity('all')">Alles</button>
+                    <button class="af-btn" onclick="filterActivity('follow')">Follows</button>
+                    <button class="af-btn" onclick="filterActivity('sub')">Subs</button>
+                    <button class="af-btn" onclick="filterActivity('donation')">Donaties</button>
+                </div>
                 <div class="activity-list" id="activityList">
                     <div class="activity-item follow"><i class="fas fa-heart"></i><span>StreamFan99 is nu een volger!</span><small>nu</small></div>
-                    <div class="activity-item sub"><i class="fas fa-star"></i><span>GamerNL heeft gesubscribed! (Tier 1)</span><small>2m geleden</small></div>
-                    <div class="activity-item donation"><i class="fas fa-coins"></i><span>ProPlayer_X doneerde €5.00</span><small>5m geleden</small></div>
-                    <div class="activity-item raid"><i class="fas fa-users"></i><span>NeonRider raidde met 45 kijkers!</span><small>8m geleden</small></div>
+                    <div class="activity-item sub"><i class="fas fa-star"></i><span>GamerNL subscribed! (Tier 1)</span><small>2m</small></div>
+                    <div class="activity-item donation"><i class="fas fa-coins"></i><span>ProPlayer_X doneerde €5.00</span><small>5m</small></div>
+                    <div class="activity-item raid"><i class="fas fa-users"></i><span>NeonRider raidde met 45 kijkers!</span><small>8m</small></div>
+                    <div class="activity-item bits"><i class="fas fa-gem"></i><span>xGamer cheered 100 bits!</span><small>12m</small></div>
+                    <div class="activity-item follow"><i class="fas fa-heart"></i><span>CoolViewer_NL volgt nu!</span><small>15m</small></div>
                 </div>
             </div>
 
             <div class="dash-alerts">
                 <h3><i class="fas fa-exclamation-triangle"></i> Alert Tester</h3>
                 <div class="alert-buttons">
-                    <button onclick="testAlert('follow')"><i class="fas fa-heart"></i> Test Follow</button>
-                    <button onclick="testAlert('sub')"><i class="fas fa-star"></i> Test Sub</button>
-                    <button onclick="testAlert('donation')"><i class="fas fa-coins"></i> Test Donatie</button>
-                    <button onclick="testAlert('raid')"><i class="fas fa-users"></i> Test Raid</button>
-                    <button onclick="testAlert('bits')"><i class="fas fa-gem"></i> Test Bits</button>
+                    <button onclick="testAlert('follow')"><i class="fas fa-heart"></i> Follow</button>
+                    <button onclick="testAlert('sub')"><i class="fas fa-star"></i> Sub</button>
+                    <button onclick="testAlert('donation')"><i class="fas fa-coins"></i> Donatie</button>
+                    <button onclick="testAlert('raid')"><i class="fas fa-users"></i> Raid</button>
+                    <button onclick="testAlert('bits')"><i class="fas fa-gem"></i> Bits</button>
+                    <button onclick="testAlert('host')"><i class="fas fa-tv"></i> Host</button>
+                </div>
+                <div class="alert-preview" id="alertPreview">
+                    <div class="alert-demo">
+                        <i class="fas fa-bell"></i>
+                        <span>Klik een alert om te testen</span>
+                    </div>
+                </div>
+                <div class="alert-settings">
+                    <label><input type="checkbox" id="alertSound" checked> Geluid</label>
+                    <label><input type="checkbox" id="alertTTS"> TTS</label>
+                    <label>Volume: <input type="range" min="0" max="100" value="70" id="alertVolume"></label>
                 </div>
             </div>
 
+            <div class="dash-hype">
+                <h3><i class="fas fa-fire"></i> Hype Train</h3>
+                <div class="hype-train" id="hypeTrain">
+                    <div class="hype-level">Level <span id="hypeLevel">3</span></div>
+                    <div class="hype-bar">
+                        <div class="hype-fill" id="hypeFill" style="width:65%"></div>
+                    </div>
+                    <div class="hype-info">
+                        <span><i class="fas fa-users"></i> <span id="hypeParticipants">28</span> deelnemers</span>
+                        <span><i class="fas fa-clock"></i> <span id="hypeTime">2:34</span></span>
+                    </div>
+                    <div class="hype-contributions">
+                        <div class="hype-contrib"><i class="fas fa-star"></i> 12 subs</div>
+                        <div class="hype-contrib"><i class="fas fa-gem"></i> 3400 bits</div>
+                        <div class="hype-contrib"><i class="fas fa-gift"></i> 5 gifts</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Goals + Raids + Schedule -->
+        <div class="dash-goals-section">
             <div class="dash-goals">
                 <h3><i class="fas fa-trophy"></i> Doelen</h3>
                 <div class="goal-item">
@@ -169,19 +275,61 @@
                     <div class="goal-info"><span>Donatie Doel</span><strong>€85 / €200</strong></div>
                     <div class="goal-bar"><div class="goal-fill" style="width:42%"></div></div>
                 </div>
+                <div class="goal-item">
+                    <div class="goal-info"><span>Bits Doel</span><strong>4200 / 10000</strong></div>
+                    <div class="goal-bar"><div class="goal-fill" style="width:42%"></div></div>
+                </div>
+                <button class="ctrl-btn btn-full" onclick="addGoal()"><i class="fas fa-plus"></i> Nieuw Doel</button>
+            </div>
+
+            <div class="dash-raids">
+                <h3><i class="fas fa-users"></i> Raid Manager</h3>
+                <div class="raid-suggestions">
+                    <p class="raid-label">Suggesties om te raiden:</p>
+                    <div class="raid-list" id="raidList">
+                        <div class="raid-item"><span class="raid-name">CoolStreamer_NL</span><span class="raid-viewers">23 kijkers</span><button onclick="executeRaid('CoolStreamer_NL')">Raid</button></div>
+                        <div class="raid-item"><span class="raid-name">GameMasterNL</span><span class="raid-viewers">56 kijkers</span><button onclick="executeRaid('GameMasterNL')">Raid</button></div>
+                        <div class="raid-item"><span class="raid-name">PixelHero</span><span class="raid-viewers">12 kijkers</span><button onclick="executeRaid('PixelHero')">Raid</button></div>
+                    </div>
+                </div>
+                <div class="raid-custom">
+                    <input type="text" id="raidTarget" placeholder="Kanaal naam...">
+                    <button onclick="executeRaid(document.getElementById('raidTarget').value)"><i class="fas fa-users"></i> Raid</button>
+                </div>
+            </div>
+
+            <div class="dash-schedule">
+                <h3><i class="fas fa-calendar"></i> Stream Schema</h3>
+                <div class="schedule-list">
+                    <div class="schedule-item today"><span class="sch-day">Vandaag</span><span class="sch-time">14:00 - 18:00</span><span class="sch-cat">Gaming</span></div>
+                    <div class="schedule-item"><span class="sch-day">Morgen</span><span class="sch-time">20:00 - 23:00</span><span class="sch-cat">Just Chatting</span></div>
+                    <div class="schedule-item"><span class="sch-day">Zondag</span><span class="sch-time">12:00 - 20:00</span><span class="sch-cat">Marathon</span></div>
+                    <div class="schedule-item"><span class="sch-day">Dinsdag</span><span class="sch-time">19:00 - 22:00</span><span class="sch-cat">Creative</span></div>
+                </div>
+                <button class="ctrl-btn btn-full" onclick="editSchedule()"><i class="fas fa-edit"></i> Schema Bewerken</button>
             </div>
         </div>
 
-        <!-- Moderation + Chatbot -->
+        <!-- Moderation + Chatbot + Sound -->
         <div class="dash-tools">
             <div class="dash-mod">
                 <h3><i class="fas fa-shield-alt"></i> Moderatie</h3>
                 <div class="mod-actions">
-                    <button onclick="modAction('slow')"><i class="fas fa-clock"></i> Slow Mode</button>
-                    <button onclick="modAction('sub')"><i class="fas fa-lock"></i> Sub Only</button>
-                    <button onclick="modAction('emote')"><i class="fas fa-smile"></i> Emote Only</button>
-                    <button onclick="modAction('followers')"><i class="fas fa-user-check"></i> Followers Only</button>
-                    <button onclick="modAction('clear')"><i class="fas fa-broom"></i> Clear Chat</button>
+                    <button onclick="modAction('slow')" id="modSlow"><i class="fas fa-clock"></i> Slow Mode</button>
+                    <button onclick="modAction('sub')" id="modSub"><i class="fas fa-lock"></i> Sub Only</button>
+                    <button onclick="modAction('emote')" id="modEmote"><i class="fas fa-smile"></i> Emote Only</button>
+                    <button onclick="modAction('followers')" id="modFollowers"><i class="fas fa-user-check"></i> Followers Only</button>
+                    <button onclick="modAction('clear')" id="modClear"><i class="fas fa-broom"></i> Clear Chat</button>
+                    <button onclick="modAction('unique')" id="modUnique"><i class="fas fa-fingerprint"></i> Unique Mode</button>
+                </div>
+                <div class="mod-banned">
+                    <h4>Auto-Mod Regels</h4>
+                    <div class="automod-settings">
+                        <label><input type="range" min="0" max="4" value="2" id="automodLevel"> Level: <span id="automodLevelVal">2</span></label>
+                        <label><input type="checkbox" checked> Block Links</label>
+                        <label><input type="checkbox" checked> Block Caps Spam</label>
+                        <label><input type="checkbox"> Block Emote Spam</label>
+                    </div>
                 </div>
             </div>
 
@@ -191,6 +339,8 @@
                     <div class="chatbot-item"><code>!social</code><span>Check mijn socials: twitter.com/...</span></div>
                     <div class="chatbot-item"><code>!discord</code><span>Join de Discord: discord.gg/...</span></div>
                     <div class="chatbot-item"><code>!uptime</code><span>Toont stream uptime</span></div>
+                    <div class="chatbot-item"><code>!game</code><span>Huidige game: {game}</span></div>
+                    <div class="chatbot-item"><code>!rank</code><span>Mijn rank: Diamond II</span></div>
                 </div>
                 <div class="chatbot-add">
                     <input type="text" id="cmdName" placeholder="!command">
@@ -198,10 +348,96 @@
                     <button onclick="addCommand()"><i class="fas fa-plus"></i></button>
                 </div>
             </div>
+
+            <div class="dash-sound">
+                <h3><i class="fas fa-volume-up"></i> Soundboard</h3>
+                <div class="soundboard-grid" id="soundboard">
+                    <button class="sound-btn" onclick="playSound('airhorn')"><i class="fas fa-bullhorn"></i><span>Airhorn</span></button>
+                    <button class="sound-btn" onclick="playSound('applause')"><i class="fas fa-hands-clapping"></i><span>Applaus</span></button>
+                    <button class="sound-btn" onclick="playSound('drumroll')"><i class="fas fa-drum"></i><span>Drumroll</span></button>
+                    <button class="sound-btn" onclick="playSound('tada')"><i class="fas fa-wand-magic-sparkles"></i><span>Tada!</span></button>
+                    <button class="sound-btn" onclick="playSound('fail')"><i class="fas fa-face-sad-tear"></i><span>Fail</span></button>
+                    <button class="sound-btn" onclick="playSound('victory')"><i class="fas fa-crown"></i><span>Victory</span></button>
+                    <button class="sound-btn" onclick="playSound('suspense')"><i class="fas fa-ghost"></i><span>Suspense</span></button>
+                    <button class="sound-btn" onclick="playSound('gg')"><i class="fas fa-gamepad"></i><span>GG</span></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Multi Platform + Clip Manager -->
+        <div class="dash-extra">
+            <div class="dash-multiplatform">
+                <h3><i class="fas fa-globe"></i> Multi-Platform</h3>
+                <div class="platform-list">
+                    <div class="platform-item connected">
+                        <i class="fab fa-twitch"></i>
+                        <span>Twitch</span>
+                        <span class="platform-status">Verbonden</span>
+                    </div>
+                    <div class="platform-item">
+                        <i class="fab fa-youtube"></i>
+                        <span>YouTube</span>
+                        <button class="platform-connect">Verbinden</button>
+                    </div>
+                    <div class="platform-item">
+                        <i class="fab fa-tiktok"></i>
+                        <span>TikTok Live</span>
+                        <button class="platform-connect">Verbinden</button>
+                    </div>
+                    <div class="platform-item">
+                        <i class="fab fa-facebook"></i>
+                        <span>Facebook Gaming</span>
+                        <button class="platform-connect">Verbinden</button>
+                    </div>
+                    <div class="platform-item">
+                        <i class="fas fa-kick"></i>
+                        <span>Kick</span>
+                        <button class="platform-connect">Verbinden</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dash-clips">
+                <h3><i class="fas fa-film"></i> Clip Manager</h3>
+                <div class="clip-list" id="clipList">
+                    <div class="clip-item">
+                        <div class="clip-thumb"><i class="fas fa-play"></i></div>
+                        <div class="clip-info">
+                            <span class="clip-title">Epic Win Moment</span>
+                            <span class="clip-meta">30s • 2 uur geleden • 45 views</span>
+                        </div>
+                        <button class="clip-share"><i class="fas fa-share"></i></button>
+                    </div>
+                    <div class="clip-item">
+                        <div class="clip-thumb"><i class="fas fa-play"></i></div>
+                        <div class="clip-info">
+                            <span class="clip-title">Funny Reaction</span>
+                            <span class="clip-meta">15s • 3 uur geleden • 23 views</span>
+                        </div>
+                        <button class="clip-share"><i class="fas fa-share"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dash-predictions">
+                <h3><i class="fas fa-crystal-ball"></i> Predictions</h3>
+                <div class="prediction-create">
+                    <input type="text" id="predQuestion" placeholder="Ga ik dit winnen?">
+                    <div class="pred-options">
+                        <input type="text" id="predYes" placeholder="Ja!" value="Ja!">
+                        <input type="text" id="predNo" placeholder="Nee..." value="Nee...">
+                    </div>
+                    <button class="ctrl-btn go-live btn-full" onclick="startPrediction()"><i class="fas fa-play"></i> Start Prediction</button>
+                </div>
+                <div class="prediction-active" id="predActive">
+                    <p class="empty-state">Geen actieve prediction</p>
+                </div>
+            </div>
         </div>
     </main>
 
     <script src="https://embed.twitch.tv/embed/v1.js"></script>
+    <script src="player.js"></script>
     <script src="dashboard.js"></script>
 </body>
 </html>
