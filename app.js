@@ -80,7 +80,7 @@ function checkAuth() {
 }
 
 function loginWithTwitch() {
-    const scopes = 'chat:read+chat:edit+user:read:email';
+    const scopes = 'chat:read+chat:edit+user:read:email+moderator:read:followers+channel:read:subscriptions+bits:read+channel:read:hype_train+channel:manage:broadcast+channel:read:stream_key+clips:edit';
     const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${TWITCH_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=${scopes}`;
     window.location.href = authUrl;
 }
