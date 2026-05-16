@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeonStream - Stream Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="pages.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="bg-animation">
+        <div class="grid-lines"></div>
+        <div class="floating-orb orb-1"></div>
+        <div class="floating-orb orb-2"></div>
+    </div>
+
+    <nav class="navbar">
+        <div class="nav-brand"><i class="fas fa-bolt"></i><span>NeonStream</span></div>
+        <div class="nav-links">
+            <a href="index.html"><i class="fas fa-tv"></i> Monitor</a>
+            <a href="dashboard.html" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="editor.html"><i class="fas fa-magic"></i> Editor</a>
+        </div>
+        <div class="nav-right">
+            <div class="stream-status" id="streamStatus"><span class="status-dot offline"></span><span>Offline</span></div>
+        </div>
+    </nav>
+
+    <main class="dashboard-page">
+        <div class="dashboard-header">
+            <h1><i class="fas fa-tachometer-alt"></i> Stream Dashboard</h1>
+            <p>Beheer je stream, bekijk analytics en control room</p>
+        </div>
+
+        <!-- Top Controls -->
+        <div class="dash-controls">
+            <div class="dash-control-card">
+                <h3>Stream Controls</h3>
+                <div class="control-buttons">
+                    <button class="ctrl-btn go-live" id="dashGoLive" onclick="dashToggleStream()">
+                        <i class="fas fa-broadcast-tower"></i> Go Live
+                    </button>
+                    <button class="ctrl-btn" onclick="dashToggleRecord()">
+                        <i class="fas fa-circle" id="dashRecIcon"></i> <span id="dashRecText">Opname</span>
+                    </button>
+                    <button class="ctrl-btn" onclick="dashShareScreen()">
+                        <i class="fas fa-desktop"></i> Scherm Delen
+                    </button>
+                </div>
+                <div class="stream-title-edit">
+                    <label>Stream Titel</label>
+                    <input type="text" id="dashStreamTitle" placeholder="Mijn geweldige stream..." value="">
+                    <button onclick="updateStreamTitle()">Update</button>
+                </div>
+                <div class="stream-category-edit">
+                    <label>Categorie</label>
+                    <select id="dashCategory">
+                        <option>Just Chatting</option>
+                        <option>Gaming</option>
+                        <option>Music</option>
+                        <option>Creative</option>
+                        <option>IRL</option>
+                        <option>Esports</option>
+                        <option>Education</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="dash-control-card">
+                <h3>Quick Stats</h3>
+                <div class="quick-stats">
+                    <div class="qs-item">
+                        <span class="qs-value" id="dashViewers">0</span>
+                        <span class="qs-label">Kijkers</span>
+                    </div>
+                    <div class="qs-item">
+                        <span class="qs-value" id="dashFollowers">0</span>
+                        <span class="qs-label">Volgers</span>
+                    </div>
+                    <div class="qs-item">
+                        <span class="qs-value" id="dashSubs">0</span>
+                        <span class="qs-label">Subs</span>
+                    </div>
+                    <div class="qs-item">
+                        <span class="qs-value" id="dashUptime">00:00</span>
+                        <span class="qs-label">Uptime</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dash-control-card">
+                <h3>Stream Health</h3>
+                <div class="health-indicators">
+                    <div class="health-item">
+                        <span class="health-dot green"></span>
+                        <span>Bitrate</span>
+                        <strong>6000 kbps</strong>
+                    </div>
+                    <div class="health-item">
+                        <span class="health-dot green"></span>
+                        <span>FPS</span>
+                        <strong>60</strong>
+                    </div>
+                    <div class="health-item">
+                        <span class="health-dot green"></span>
+                        <span>Resolutie</span>
+                        <strong>1080p</strong>
+                    </div>
+                    <div class="health-item">
+                        <span class="health-dot yellow"></span>
+                        <span>CPU</span>
+                        <strong>45%</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stream Preview + Chat -->
+        <div class="dash-main">
+            <div class="dash-preview">
+                <h3><i class="fas fa-eye"></i> Live Preview</h3>
+                <div class="preview-container">
+                    <div id="dashTwitchEmbed"></div>
+                </div>
+            </div>
+
+            <div class="dash-chat">
+                <h3><i class="fas fa-comments"></i> Chat</h3>
+                <div class="dash-chat-embed" id="dashChatEmbed"></div>
+            </div>
+        </div>
+
+        <!-- Activity Feed + Alerts -->
+        <div class="dash-bottom">
+            <div class="dash-activity">
+                <h3><i class="fas fa-bell"></i> Activiteit Feed</h3>
+                <div class="activity-list" id="activityList">
+                    <div class="activity-item follow"><i class="fas fa-heart"></i><span>StreamFan99 is nu een volger!</span><small>nu</small></div>
+                    <div class="activity-item sub"><i class="fas fa-star"></i><span>GamerNL heeft gesubscribed! (Tier 1)</span><small>2m geleden</small></div>
+                    <div class="activity-item donation"><i class="fas fa-coins"></i><span>ProPlayer_X doneerde €5.00</span><small>5m geleden</small></div>
+                    <div class="activity-item raid"><i class="fas fa-users"></i><span>NeonRider raidde met 45 kijkers!</span><small>8m geleden</small></div>
+                </div>
+            </div>
+
+            <div class="dash-alerts">
+                <h3><i class="fas fa-exclamation-triangle"></i> Alert Tester</h3>
+                <div class="alert-buttons">
+                    <button onclick="testAlert('follow')"><i class="fas fa-heart"></i> Test Follow</button>
+                    <button onclick="testAlert('sub')"><i class="fas fa-star"></i> Test Sub</button>
+                    <button onclick="testAlert('donation')"><i class="fas fa-coins"></i> Test Donatie</button>
+                    <button onclick="testAlert('raid')"><i class="fas fa-users"></i> Test Raid</button>
+                    <button onclick="testAlert('bits')"><i class="fas fa-gem"></i> Test Bits</button>
+                </div>
+            </div>
+
+            <div class="dash-goals">
+                <h3><i class="fas fa-trophy"></i> Doelen</h3>
+                <div class="goal-item">
+                    <div class="goal-info"><span>Volgers Doel</span><strong>750 / 1000</strong></div>
+                    <div class="goal-bar"><div class="goal-fill" style="width:75%"></div></div>
+                </div>
+                <div class="goal-item">
+                    <div class="goal-info"><span>Sub Doel</span><strong>12 / 25</strong></div>
+                    <div class="goal-bar"><div class="goal-fill" style="width:48%"></div></div>
+                </div>
+                <div class="goal-item">
+                    <div class="goal-info"><span>Donatie Doel</span><strong>€85 / €200</strong></div>
+                    <div class="goal-bar"><div class="goal-fill" style="width:42%"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Moderation + Chatbot -->
+        <div class="dash-tools">
+            <div class="dash-mod">
+                <h3><i class="fas fa-shield-alt"></i> Moderatie</h3>
+                <div class="mod-actions">
+                    <button onclick="modAction('slow')"><i class="fas fa-clock"></i> Slow Mode</button>
+                    <button onclick="modAction('sub')"><i class="fas fa-lock"></i> Sub Only</button>
+                    <button onclick="modAction('emote')"><i class="fas fa-smile"></i> Emote Only</button>
+                    <button onclick="modAction('followers')"><i class="fas fa-user-check"></i> Followers Only</button>
+                    <button onclick="modAction('clear')"><i class="fas fa-broom"></i> Clear Chat</button>
+                </div>
+            </div>
+
+            <div class="dash-chatbot">
+                <h3><i class="fas fa-robot"></i> Chatbot Commands</h3>
+                <div class="chatbot-list" id="chatbotList">
+                    <div class="chatbot-item"><code>!social</code><span>Check mijn socials: twitter.com/...</span></div>
+                    <div class="chatbot-item"><code>!discord</code><span>Join de Discord: discord.gg/...</span></div>
+                    <div class="chatbot-item"><code>!uptime</code><span>Toont stream uptime</span></div>
+                </div>
+                <div class="chatbot-add">
+                    <input type="text" id="cmdName" placeholder="!command">
+                    <input type="text" id="cmdResponse" placeholder="Response...">
+                    <button onclick="addCommand()"><i class="fas fa-plus"></i></button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://embed.twitch.tv/embed/v1.js"></script>
+    <script src="dashboard.js"></script>
+</body>
+</html>

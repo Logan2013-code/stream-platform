@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeonStream - Pro Editor</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="pages.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="bg-animation">
+        <div class="grid-lines"></div>
+        <div class="floating-orb orb-1"></div>
+        <div class="floating-orb orb-2"></div>
+    </div>
+
+    <nav class="navbar">
+        <div class="nav-brand"><i class="fas fa-bolt"></i><span>NeonStream</span></div>
+        <div class="nav-links">
+            <a href="index.html"><i class="fas fa-tv"></i> Monitor</a>
+            <a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="editor.html" class="active"><i class="fas fa-magic"></i> Editor</a>
+        </div>
+        <div class="nav-right">
+            <div class="stream-status" id="streamStatus"><span class="status-dot offline"></span><span>Editor Mode</span></div>
+        </div>
+    </nav>
+
+    <main class="editor-page">
+        <div class="editor-header">
+            <h1><i class="fas fa-magic"></i> Pro Stream Editor</h1>
+            <p>Overlays, events, scene management & meer</p>
+        </div>
+
+        <!-- Editor Tabs -->
+        <div class="editor-tabs">
+            <button class="editor-tab active" onclick="switchEditorTab('scenes')"><i class="fas fa-layer-group"></i> Scenes</button>
+            <button class="editor-tab" onclick="switchEditorTab('overlays')"><i class="fas fa-image"></i> Overlays</button>
+            <button class="editor-tab" onclick="switchEditorTab('events')"><i class="fas fa-calendar-alt"></i> Events</button>
+            <button class="editor-tab" onclick="switchEditorTab('timer')"><i class="fas fa-stopwatch"></i> Timer</button>
+            <button class="editor-tab" onclick="switchEditorTab('polls')"><i class="fas fa-poll"></i> Polls</button>
+            <button class="editor-tab" onclick="switchEditorTab('branding')"><i class="fas fa-palette"></i> Branding</button>
+        </div>
+
+        <!-- Scenes Panel -->
+        <div class="editor-panel" id="panelScenes">
+            <div class="editor-split">
+                <div class="editor-preview">
+                    <h3><i class="fas fa-eye"></i> Scene Preview</h3>
+                    <div class="scene-preview-area" id="scenePreview">
+                        <div class="scene-canvas" id="sceneCanvas">
+                            <div class="scene-element webcam" id="elemWebcam" draggable="true">
+                                <i class="fas fa-video"></i> Webcam
+                            </div>
+                            <div class="scene-element chat-overlay" id="elemChat">
+                                <i class="fas fa-comments"></i> Chat
+                            </div>
+                            <div class="scene-element alert-box" id="elemAlerts">
+                                <i class="fas fa-bell"></i> Alerts
+                            </div>
+                        </div>
+                    </div>
+                    <div class="scene-controls">
+                        <button class="ctrl-btn" onclick="addSceneElement('text')"><i class="fas fa-font"></i> Tekst</button>
+                        <button class="ctrl-btn" onclick="addSceneElement('image')"><i class="fas fa-image"></i> Afbeelding</button>
+                        <button class="ctrl-btn" onclick="addSceneElement('webcam')"><i class="fas fa-video"></i> Webcam</button>
+                        <button class="ctrl-btn" onclick="addSceneElement('browser')"><i class="fas fa-globe"></i> Browser</button>
+                    </div>
+                </div>
+                <div class="editor-sidebar">
+                    <h3><i class="fas fa-layer-group"></i> Scenes</h3>
+                    <div class="scene-list" id="sceneList">
+                        <div class="scene-item active"><i class="fas fa-gamepad"></i> Gaming<span class="scene-badge">Live</span></div>
+                        <div class="scene-item"><i class="fas fa-comments"></i> Just Chatting</div>
+                        <div class="scene-item"><i class="fas fa-clock"></i> Starting Soon</div>
+                        <div class="scene-item"><i class="fas fa-coffee"></i> BRB</div>
+                        <div class="scene-item"><i class="fas fa-hand-wave"></i> Ending</div>
+                    </div>
+                    <button class="ctrl-btn btn-full" onclick="addScene()"><i class="fas fa-plus"></i> Nieuwe Scene</button>
+
+                    <h3 style="margin-top:20px;"><i class="fas fa-exchange-alt"></i> Transitions</h3>
+                    <select class="editor-select" id="transitionType">
+                        <option>Fade</option>
+                        <option>Slide</option>
+                        <option>Zoom</option>
+                        <option>Stinger</option>
+                        <option>Cut</option>
+                    </select>
+                    <div class="transition-duration">
+                        <label>Duur: <span id="transDurVal">500</span>ms</label>
+                        <input type="range" min="100" max="2000" value="500" id="transDuration" oninput="document.getElementById('transDurVal').textContent=this.value">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overlays Panel -->
+        <div class="editor-panel hidden" id="panelOverlays">
+            <div class="overlay-grid">
+                <div class="overlay-card">
+                    <div class="overlay-preview" style="background:linear-gradient(135deg,#a855f7,#06b6d4);"><i class="fas fa-gamepad"></i></div>
+                    <h4>Gaming Overlay</h4>
+                    <p>Webcam frame + chat + alerts</p>
+                    <button onclick="applyOverlay('gaming')">Toepassen</button>
+                </div>
+                <div class="overlay-card">
+                    <div class="overlay-preview" style="background:linear-gradient(135deg,#ec4899,#f97316);"><i class="fas fa-microphone"></i></div>
+                    <h4>Podcast Overlay</h4>
+                    <p>Clean layout voor podcasts</p>
+                    <button onclick="applyOverlay('podcast')">Toepassen</button>
+                </div>
+                <div class="overlay-card">
+                    <div class="overlay-preview" style="background:linear-gradient(135deg,#10b981,#06b6d4);"><i class="fas fa-music"></i></div>
+                    <h4>Music Overlay</h4>
+                    <p>Visualizer + now playing</p>
+                    <button onclick="applyOverlay('music')">Toepassen</button>
+                </div>
+                <div class="overlay-card">
+                    <div class="overlay-preview" style="background:linear-gradient(135deg,#f97316,#ef4444);"><i class="fas fa-trophy"></i></div>
+                    <h4>Esports Overlay</h4>
+                    <p>Scoreboard + team info</p>
+                    <button onclick="applyOverlay('esports')">Toepassen</button>
+                </div>
+                <div class="overlay-card">
+                    <div class="overlay-preview" style="background:linear-gradient(135deg,#6366f1,#a855f7);"><i class="fas fa-clock"></i></div>
+                    <h4>Starting Soon</h4>
+                    <p>Countdown + socials</p>
+                    <button onclick="applyOverlay('starting')">Toepassen</button>
+                </div>
+                <div class="overlay-card">
+                    <div class="overlay-preview" style="background:linear-gradient(135deg,#374151,#1f2937);"><i class="fas fa-plus"></i></div>
+                    <h4>Custom Overlay</h4>
+                    <p>Maak je eigen overlay</p>
+                    <button onclick="createCustomOverlay()">Aanmaken</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Events Panel -->
+        <div class="editor-panel hidden" id="panelEvents">
+            <div class="events-manager">
+                <div class="events-list-panel">
+                    <h3><i class="fas fa-calendar-alt"></i> Geplande Events</h3>
+                    <div class="event-cards" id="eventCards">
+                        <div class="event-card">
+                            <div class="event-date"><span class="event-day">15</span><span class="event-month">MAR</span></div>
+                            <div class="event-info">
+                                <h4>Sub Sunday</h4>
+                                <p>14:00 - 18:00 • Gaming Marathon</p>
+                                <div class="event-tags"><span>Gaming</span><span>Community</span></div>
+                            </div>
+                            <button class="event-edit"><i class="fas fa-edit"></i></button>
+                        </div>
+                        <div class="event-card">
+                            <div class="event-date"><span class="event-day">22</span><span class="event-month">MAR</span></div>
+                            <div class="event-info">
+                                <h4>Charity Stream</h4>
+                                <p>12:00 - 24:00 • 12 uur marathon</p>
+                                <div class="event-tags"><span>Charity</span><span>Special</span></div>
+                            </div>
+                            <button class="event-edit"><i class="fas fa-edit"></i></button>
+                        </div>
+                    </div>
+                    <button class="ctrl-btn btn-full" onclick="addEvent()"><i class="fas fa-plus"></i> Nieuw Event</button>
+                </div>
+                <div class="events-create-panel">
+                    <h3><i class="fas fa-plus-circle"></i> Event Aanmaken</h3>
+                    <div class="event-form">
+                        <input type="text" placeholder="Event naam" id="eventName">
+                        <input type="date" id="eventDate">
+                        <div class="event-time-row">
+                            <input type="time" id="eventStart" value="14:00">
+                            <span>tot</span>
+                            <input type="time" id="eventEnd" value="18:00">
+                        </div>
+                        <textarea placeholder="Beschrijving..." id="eventDesc"></textarea>
+                        <select id="eventType">
+                            <option>Gaming</option>
+                            <option>Just Chatting</option>
+                            <option>Charity</option>
+                            <option>Tournament</option>
+                            <option>Collab</option>
+                            <option>Special Event</option>
+                        </select>
+                        <button class="ctrl-btn go-live btn-full" onclick="createEvent()"><i class="fas fa-calendar-plus"></i> Event Aanmaken</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timer Panel -->
+        <div class="editor-panel hidden" id="panelTimer">
+            <div class="timer-section">
+                <div class="timer-display">
+                    <div class="timer-big" id="timerDisplay">00:00:00</div>
+                    <div class="timer-controls">
+                        <button class="ctrl-btn go-live" onclick="startTimer()"><i class="fas fa-play"></i></button>
+                        <button class="ctrl-btn" onclick="pauseTimer()"><i class="fas fa-pause"></i></button>
+                        <button class="ctrl-btn" onclick="resetTimer()"><i class="fas fa-redo"></i></button>
+                    </div>
+                </div>
+                <div class="timer-presets">
+                    <h3>Countdown Presets</h3>
+                    <div class="preset-buttons">
+                        <button onclick="setCountdown(300)">5 min</button>
+                        <button onclick="setCountdown(600)">10 min</button>
+                        <button onclick="setCountdown(900)">15 min</button>
+                        <button onclick="setCountdown(1800)">30 min</button>
+                        <button onclick="setCountdown(3600)">1 uur</button>
+                    </div>
+                    <div class="timer-custom">
+                        <input type="number" id="customMinutes" placeholder="Minuten" min="1">
+                        <button onclick="setCustomCountdown()">Start</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Polls Panel -->
+        <div class="editor-panel hidden" id="panelPolls">
+            <div class="polls-section">
+                <div class="poll-create">
+                    <h3><i class="fas fa-poll"></i> Poll Aanmaken</h3>
+                    <input type="text" id="pollQuestion" placeholder="Stel een vraag...">
+                    <div class="poll-options" id="pollOptions">
+                        <input type="text" placeholder="Optie 1">
+                        <input type="text" placeholder="Optie 2">
+                    </div>
+                    <button class="ctrl-btn" onclick="addPollOption()"><i class="fas fa-plus"></i> Optie toevoegen</button>
+                    <div class="poll-settings">
+                        <label>Duur: <input type="number" value="60" min="10" id="pollDuration"> seconden</label>
+                    </div>
+                    <button class="ctrl-btn go-live btn-full" onclick="startPoll()"><i class="fas fa-play"></i> Start Poll</button>
+                </div>
+                <div class="poll-active" id="pollActive">
+                    <h3>Actieve Poll</h3>
+                    <p class="empty-state">Geen actieve poll. Maak er een hierboven.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Branding Panel -->
+        <div class="editor-panel hidden" id="panelBranding">
+            <div class="branding-section">
+                <div class="brand-colors">
+                    <h3><i class="fas fa-palette"></i> Merk Kleuren</h3>
+                    <div class="brand-color-list">
+                        <div class="brand-color-item">
+                            <label>Primair</label>
+                            <input type="color" value="#a855f7" id="brandPrimary">
+                        </div>
+                        <div class="brand-color-item">
+                            <label>Secundair</label>
+                            <input type="color" value="#06b6d4" id="brandSecondary">
+                        </div>
+                        <div class="brand-color-item">
+                            <label>Accent</label>
+                            <input type="color" value="#ec4899" id="brandAccent">
+                        </div>
+                        <div class="brand-color-item">
+                            <label>Achtergrond</label>
+                            <input type="color" value="#0a0a0f" id="brandBg">
+                        </div>
+                    </div>
+                </div>
+                <div class="brand-fonts">
+                    <h3><i class="fas fa-font"></i> Fonts</h3>
+                    <select class="editor-select">
+                        <option>Rajdhani</option>
+                        <option>Orbitron</option>
+                        <option>Inter</option>
+                        <option>Montserrat</option>
+                        <option>Roboto</option>
+                        <option>Poppins</option>
+                    </select>
+                </div>
+                <div class="brand-preview">
+                    <h3><i class="fas fa-eye"></i> Preview</h3>
+                    <div class="brand-preview-box">
+                        <div class="brand-mock-header">Jouw Stream Naam</div>
+                        <div class="brand-mock-body">
+                            <div class="brand-mock-alert">🎉 Nieuwe volger!</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="editor.js"></script>
+</body>
+</html>

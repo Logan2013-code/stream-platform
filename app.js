@@ -288,11 +288,16 @@ function initTwitch() {
             channel: state.channel,
             layout: "video",
             autoplay: true,
-            muted: false,
+            muted: true,
             parent: PARENT_DOMAINS
         });
 
-        twitchEmbed.addEventListener(Twitch.Embed.VIDEO_READY, () => checkLiveStatus());
+        twitchEmbed.addEventListener(Twitch.Embed.VIDEO_READY, () => {
+            checkLiveStatus();
+            const player = twitchEmbed.getPlayer();
+            player.play();
+            setTimeout(() => player.setMuted(false), 1500);
+        });
         twitchEmbed.addEventListener(Twitch.Embed.VIDEO_PLAY, () => setTimeout(checkLiveStatus, 2000));
     } catch (e) {
         embedEl.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;color:#a0a0b0;padding:20px;text-align:center;">
