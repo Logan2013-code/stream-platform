@@ -189,9 +189,17 @@ function logout() {
 
 function switchLoginTab(tab) {
     document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
-    event.target.classList.add('active');
+    if (event && event.target) event.target.classList.add('active');
     document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
     document.getElementById('registerForm').classList.toggle('hidden', tab !== 'register');
+}
+
+// Skip login entirely for quick access
+function skipLogin() {
+    state.user = { username: 'Gast', type: 'local', avatar: '', email: '' };
+    state.loggedIn = true;
+    saveState();
+    showApp();
 }
 
 function showLogin() {
@@ -759,4 +767,6 @@ document.addEventListener('change', (e) => { if (e.target.id === 'autoMsgInterva
 document.addEventListener('click', (e) => { if (!e.target.closest('.user-menu')) document.getElementById('userDropdown')?.classList.add('hidden'); });
 
 // ==================== START ====================
-checkAuth();
+document.addEventListener('DOMContentLoaded', () => {
+    checkAuth();
+});

@@ -395,6 +395,29 @@ body {
     box-shadow: var(--glow);
 }
 
+.btn-login-guest {
+    width: 100%;
+    padding: 12px;
+    background: var(--dark-surface);
+    color: var(--text-secondary);
+    border: 1px solid var(--dark-border);
+    border-radius: 8px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s;
+}
+
+.btn-login-guest:hover {
+    border-color: var(--accent);
+    color: var(--text-primary);
+}
+
 .login-footer {
     text-align: center;
     margin-top: 20px;
