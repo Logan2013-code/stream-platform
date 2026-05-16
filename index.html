@@ -36,6 +36,23 @@
     </nav>
 
     <main class="main-content">
+        <!-- Channel Switcher -->
+        <div class="channel-switcher">
+            <div class="switcher-input">
+                <i class="fab fa-twitch"></i>
+                <input type="text" id="channelInput" placeholder="Voer een Twitch kanaal in..." value="tiesgames22222" onkeypress="if(event.key==='Enter')switchChannel()">
+                <button class="btn btn-switch" onclick="switchChannel()">
+                    <i class="fas fa-arrow-right"></i> Switch
+                </button>
+            </div>
+            <div class="favorite-channels" id="favoriteChannels">
+                <button class="fav-chip active" onclick="switchToChannel('tiesgames22222')">tiesgames22222</button>
+            </div>
+            <button class="btn btn-add-fav" onclick="addFavorite()">
+                <i class="fas fa-plus"></i> Favoriet
+            </button>
+        </div>
+
         <!-- Channel Header -->
         <div class="channel-header">
             <div class="channel-info">
@@ -43,7 +60,7 @@
                     <i class="fas fa-user"></i>
                 </div>
                 <div class="channel-details">
-                    <h1 class="channel-name">tiesgames22222</h1>
+                    <h1 class="channel-name" id="channelName">tiesgames22222</h1>
                     <p class="channel-title" id="channelTitle">Twitch Stream Monitor</p>
                     <div class="channel-meta">
                         <span id="channelGame"><i class="fas fa-gamepad"></i> -</span>
@@ -59,7 +76,7 @@
                 <button class="btn btn-record" id="recordBtn" onclick="toggleRecording()">
                     <i class="fas fa-circle"></i> Opname
                 </button>
-                <a href="https://twitch.tv/tiesgames22222" target="_blank" class="btn btn-twitch">
+                <a href="https://twitch.tv/tiesgames22222" target="_blank" class="btn btn-twitch" id="twitchLink">
                     <i class="fab fa-twitch"></i> Open Twitch
                 </a>
             </div>

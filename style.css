@@ -222,6 +222,140 @@ body {
     background: #666;
 }
 
+/* Channel Switcher */
+.channel-switcher {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 20px;
+    background: var(--dark-card);
+    border-radius: 16px;
+    border: 1px solid var(--dark-border);
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.switcher-input {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--dark-surface);
+    border: 1px solid var(--dark-border);
+    border-radius: 10px;
+    padding: 5px 15px;
+    flex: 1;
+    min-width: 250px;
+    transition: border-color 0.3s ease;
+}
+
+.switcher-input:focus-within {
+    border-color: var(--neon-purple);
+    box-shadow: var(--glow-purple);
+}
+
+.switcher-input i {
+    color: #9146ff;
+    font-size: 1.2rem;
+}
+
+.switcher-input input {
+    flex: 1;
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    outline: none;
+    padding: 8px 0;
+}
+
+.switcher-input input::placeholder {
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+
+.btn-switch {
+    background: var(--gradient-1);
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s ease;
+}
+
+.btn-switch:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--glow-purple);
+}
+
+.favorite-channels {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.fav-chip {
+    background: var(--dark-surface);
+    border: 1px solid var(--dark-border);
+    color: var(--text-secondary);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.fav-chip:hover {
+    border-color: #9146ff;
+    color: #9146ff;
+}
+
+.fav-chip.active {
+    background: rgba(145, 70, 255, 0.2);
+    border-color: #9146ff;
+    color: #9146ff;
+    box-shadow: 0 0 10px rgba(145, 70, 255, 0.2);
+}
+
+.btn-add-fav {
+    background: var(--dark-surface);
+    border: 1px dashed var(--dark-border);
+    color: var(--text-secondary);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-add-fav:hover {
+    border-color: var(--neon-green);
+    color: var(--neon-green);
+}
+
+.fav-remove {
+    margin-left: 6px;
+    font-size: 1rem;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.fav-chip:hover .fav-remove {
+    opacity: 1;
+    color: #ef4444;
+}
+
 /* Channel Header */
 .channel-header {
     display: flex;

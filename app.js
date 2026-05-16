@@ -1,5 +1,5 @@
 // Config
-const CHANNEL = 'tiesgames22222';
+let CHANNEL = 'tiesgames22222';
 const PARENT_DOMAINS = ['logan2013-code.github.io', 'localhost', '127.0.0.1'];
 
 // State
@@ -14,6 +14,7 @@ let monitorStartTime = new Date();
 let twitchEmbed = null;
 let viewerCheckInterval = null;
 let graphInterval = null;
+let favorites = JSON.parse(localStorage.getItem('neonstream_favorites') || '["tiesgames22222"]');
 
 // Initialize Twitch Embed
 function initTwitch() {
@@ -450,11 +451,105 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
+// Channel Switching
+function switchChannel() {
+    const input = document.getElementById('channelInput');
+    const newChannel = input.value.trim().toLowerCase();
+    if (!newChannel || newChannel === CHANNEL) return;
+
+    switchToChannel(newChannel);
+}
+
+function switchToChannel(channel) {
+    CHANNEL = channel;
+    document.getElementById('channelInput').value = channel;
+    document.getElementById('channelName').textContent = channel;
+    document.getElementById('twitchLink').href = `https://twitch.tv/${channel}`;
+
+    // Reset stats
+    peakViewers = 0;
+    viewerHistory = [];
+    monitorStartTime = new Date();
+    document.getElementById('statPeakViewers').textContent = '0';
+    document.getElementById('statViewers').textContent = '0';
+    document.getElementById('statUptime').textContent = '-';
+
+    // Update active chip
+    document.querySelectorAll('.fav-chip').forEach(chip => {
+        chip.classList.toggle('active', chip.textContent === channel);
+    });
+
+    // Reload embed
+    destroyEmbed();
+    initTwitch();
+
+    addEvent(`Geswitcht naar kanaal: ${channel}`, 'success');
+    showNotification(`Nu kijken naar: ${channel} 📺`, 'success');
+
+    setTimeout(trackViewers, 5000);
+}
+
+function destroyEmbed() {
+    const embedContainer = document.getElementById('twitch-embed');
+    embedContainer.innerHTML = '';
+
+    const chatContainer = document.getElementById('twitch-chat');
+    chatContainer.innerHTML = '';
+
+    twitchEmbed = null;
+}
+
+function addFavorite() {
+    const channel = document.getElementById('channelInput').value.trim().toLowerCase();
+    if (!channel) {
+        showNotification('Voer eerst een kanaal naam in.', 'info');
+        return;
+    }
+
+    if (favorites.includes(channel)) {
+        showNotification(`${channel} staat al in je favorieten.`, 'info');
+        return;
+    }
+
+    favorites.push(channel);
+    localStorage.setItem('neonstream_favorites', JSON.stringify(favorites));
+    renderFavorites();
+    showNotification(`${channel} toegevoegd aan favorieten! ⭐`, 'success');
+}
+
+function removeFavorite(channel, event) {
+    event.stopPropagation();
+    favorites = favorites.filter(f => f !== channel);
+    localStorage.setItem('neonstream_favorites', JSON.stringify(favorites));
+    renderFavorites();
+    showNotification(`${channel} verwijderd uit favorieten.`, 'info');
+}
+
+function renderFavorites() {
+    const container = document.getElementById('favoriteChannels');
+    container.innerHTML = favorites.map(fav => `
+        <button class="fav-chip ${fav === CHANNEL ? 'active' : ''}" onclick="switchToChannel('${fav}')">
+            ${fav}
+            <span class="fav-remove" onclick="removeFavorite('${fav}', event)">&times;</span>
+        </button>
+    `).join('');
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('monitorStartTime').textContent =
         monitorStartTime.toLocaleTimeString('nl-NL');
 
+    // Load saved channel
+    const savedChannel = localStorage.getItem('neonstream_channel');
+    if (savedChannel) {
+        CHANNEL = savedChannel;
+        document.getElementById('channelInput').value = CHANNEL;
+        document.getElementById('channelName').textContent = CHANNEL;
+        document.getElementById('twitchLink').href = `https://twitch.tv/${CHANNEL}`;
+    }
+
+    renderFavorites();
     initTwitch();
 
     // Update uptime every second
@@ -465,6 +560,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initial viewer check after 5 seconds
     setTimeout(trackViewers, 5000);
+
+    // Save channel on switch
+    const origSwitch = switchToChannel;
 
     showNotification(`Monitoring ${CHANNEL} gestart! 📡`, 'success');
     addEvent(`Monitoring gestart voor ${CHANNEL}`, 'success');
