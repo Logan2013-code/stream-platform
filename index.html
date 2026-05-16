@@ -24,219 +24,277 @@
         <div class="nav-links">
             <a href="#" class="active"><i class="fas fa-tv"></i> Stream</a>
             <a href="#stats-section"><i class="fas fa-chart-bar"></i> Stats</a>
-            <a href="#clips-section"><i class="fas fa-cut"></i> Clips</a>
             <a href="#recordings-section"><i class="fas fa-video"></i> Opnames</a>
         </div>
-        <div class="nav-user">
+        <div class="nav-right">
             <div class="stream-status" id="streamStatus">
                 <span class="status-dot offline"></span>
-                <span>Offline</span>
+                <span>Checking...</span>
             </div>
         </div>
     </nav>
 
-    <main class="main-content">
-        <!-- Channel Switcher -->
-        <div class="channel-switcher">
-            <div class="switcher-input">
-                <i class="fab fa-twitch"></i>
-                <input type="text" id="channelInput" placeholder="Voer een Twitch kanaal in..." value="tiesgames22222" onkeypress="if(event.key==='Enter')switchChannel()">
-                <button class="btn btn-switch" onclick="switchChannel()">
-                    <i class="fas fa-arrow-right"></i> Switch
-                </button>
-            </div>
-            <div class="favorite-channels" id="favoriteChannels">
-                <button class="fav-chip active" onclick="switchToChannel('tiesgames22222')">tiesgames22222</button>
-            </div>
-            <button class="btn btn-add-fav" onclick="addFavorite()">
-                <i class="fas fa-plus"></i> Favoriet
-            </button>
-        </div>
-
-        <!-- Channel Header -->
-        <div class="channel-header">
-            <div class="channel-info">
-                <div class="channel-avatar" id="channelAvatar">
-                    <i class="fas fa-user"></i>
-                </div>
-                <div class="channel-details">
-                    <h1 class="channel-name" id="channelName">tiesgames22222</h1>
-                    <p class="channel-title" id="channelTitle">Twitch Stream Monitor</p>
-                    <div class="channel-meta">
-                        <span id="channelGame"><i class="fas fa-gamepad"></i> -</span>
-                        <span id="channelViewers"><i class="fas fa-eye"></i> 0 kijkers</span>
-                        <span id="channelFollowers"><i class="fas fa-heart"></i> - volgers</span>
-                    </div>
-                </div>
-            </div>
-            <div class="channel-actions">
-                <button class="btn btn-primary" onclick="refreshData()">
-                    <i class="fas fa-sync-alt"></i> Vernieuw
-                </button>
-                <button class="btn btn-record" id="recordBtn" onclick="toggleRecording()">
-                    <i class="fas fa-circle"></i> Opname
-                </button>
-                <a href="https://twitch.tv/tiesgames22222" target="_blank" class="btn btn-twitch" id="twitchLink">
-                    <i class="fab fa-twitch"></i> Open Twitch
-                </a>
-            </div>
-        </div>
-
-        <!-- Stream + Chat -->
-        <div class="stream-section">
-            <div class="stream-container">
-                <div class="video-wrapper">
-                    <div id="twitch-embed"></div>
-                    <div class="recording-indicator" id="recordingIndicator">
-                        <i class="fas fa-circle"></i> REC
-                    </div>
-                </div>
-                <div class="stream-actions">
-                    <div class="action-group">
-                        <button class="action-btn" onclick="takeScreenshot()">
-                            <i class="fas fa-camera"></i> Screenshot
-                        </button>
-                        <button class="action-btn" onclick="toggleFullscreen()">
-                            <i class="fas fa-expand"></i> Volledig scherm
-                        </button>
-                        <button class="action-btn" onclick="openMultiStream()">
-                            <i class="fas fa-columns"></i> Multi-stream
-                        </button>
-                    </div>
-                    <div class="stream-tags" id="streamTags">
-                        <span class="tag">Twitch</span>
-                        <span class="tag">Monitor</span>
-                    </div>
-                </div>
+    <div class="app-layout">
+        <!-- LEFT SIDEBAR - Settings Panel -->
+        <aside class="sidebar-left" id="sidebarLeft">
+            <div class="sidebar-toggle" onclick="toggleSidebar()">
+                <i class="fas fa-cog"></i>
             </div>
 
-            <aside class="chat-section">
-                <div class="chat-header">
-                    <h3><i class="fab fa-twitch"></i> Twitch Chat</h3>
-                    <div class="chat-tabs">
-                        <button class="chat-tab active" onclick="switchTab('chat')">Chat</button>
-                        <button class="chat-tab" onclick="switchTab('events')">Events</button>
-                        <button class="chat-tab" onclick="switchTab('info')">Info</button>
+            <div class="sidebar-content">
+                <h3><i class="fas fa-sliders-h"></i> Instellingen</h3>
+
+                <!-- Channel Switch -->
+                <div class="setting-group">
+                    <label>Kanaal</label>
+                    <div class="setting-input-row">
+                        <input type="text" id="channelInput" value="tiesgames22222" placeholder="Twitch kanaal...">
+                        <button onclick="switchChannel()" class="btn-sm"><i class="fas fa-arrow-right"></i></button>
                     </div>
                 </div>
 
-                <div class="chat-content" id="chatContent">
-                    <div id="twitch-chat"></div>
+                <!-- Favorites -->
+                <div class="setting-group">
+                    <label>Favorieten</label>
+                    <div class="favorites-list" id="favoritesList"></div>
+                    <button onclick="addFavorite()" class="btn-sm btn-full"><i class="fas fa-plus"></i> Favoriet toevoegen</button>
                 </div>
 
-                <div class="events-content hidden" id="eventsContent">
-                    <div class="events-list" id="eventsList">
-                        <div class="event-item">
-                            <i class="fas fa-info-circle"></i>
-                            <span>Monitoring gestart...</span>
-                            <small id="monitorStartTime"></small>
+                <!-- Auto Messages -->
+                <div class="setting-group">
+                    <label>Auto Berichten</label>
+                    <div class="toggle-row">
+                        <span>Automatisch versturen</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="autoMsgToggle" onchange="toggleAutoMessages()">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-input-row">
+                        <input type="number" id="autoMsgInterval" value="60" min="10" max="3600" placeholder="Interval (sec)">
+                        <span class="input-suffix">sec</span>
+                    </div>
+                    <div class="auto-msg-list" id="autoMsgList"></div>
+                    <div class="setting-input-row">
+                        <input type="text" id="newAutoMsg" placeholder="Nieuw auto bericht...">
+                        <button onclick="addAutoMessage()" class="btn-sm"><i class="fas fa-plus"></i></button>
+                    </div>
+                </div>
+
+                <!-- Quick Messages -->
+                <div class="setting-group">
+                    <label>Snelle Berichten</label>
+                    <div class="quick-msg-list" id="quickMsgList"></div>
+                    <div class="setting-input-row">
+                        <input type="text" id="newQuickMsg" placeholder="Nieuw snel bericht...">
+                        <button onclick="addQuickMessage()" class="btn-sm"><i class="fas fa-plus"></i></button>
+                    </div>
+                </div>
+
+                <!-- Notifications Settings -->
+                <div class="setting-group">
+                    <label>Notificaties</label>
+                    <div class="toggle-row">
+                        <span>Live melding</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="notifyLive" checked onchange="saveSettings()">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-row">
+                        <span>Geluid aan</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="notifySound" onchange="saveSettings()">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Theme -->
+                <div class="setting-group">
+                    <label>Thema Kleur</label>
+                    <div class="color-options">
+                        <button class="color-btn active" data-color="purple" onclick="setTheme('purple')" style="background:#a855f7;"></button>
+                        <button class="color-btn" data-color="blue" onclick="setTheme('blue')" style="background:#06b6d4;"></button>
+                        <button class="color-btn" data-color="pink" onclick="setTheme('pink')" style="background:#ec4899;"></button>
+                        <button class="color-btn" data-color="green" onclick="setTheme('green')" style="background:#10b981;"></button>
+                        <button class="color-btn" data-color="orange" onclick="setTheme('orange')" style="background:#f97316;"></button>
+                    </div>
+                </div>
+
+                <!-- Data -->
+                <div class="setting-group">
+                    <label>Data</label>
+                    <button onclick="exportData()" class="btn-sm btn-full"><i class="fas fa-download"></i> Exporteer Data</button>
+                    <button onclick="clearAllData()" class="btn-sm btn-full btn-danger"><i class="fas fa-trash"></i> Wis Alle Data</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <!-- Live Status Banner -->
+            <div class="live-banner" id="liveBanner">
+                <div class="live-banner-content">
+                    <span class="live-pulse"></span>
+                    <span class="live-text" id="liveBannerText">Checking stream status...</span>
+                </div>
+                <span class="live-viewers" id="liveBannerViewers"></span>
+            </div>
+
+            <!-- Stream + Chat + Viewers -->
+            <div class="stream-section">
+                <div class="stream-container">
+                    <div class="video-wrapper">
+                        <div id="twitch-embed"></div>
+                        <div class="recording-indicator" id="recordingIndicator">
+                            <i class="fas fa-circle"></i> REC
+                        </div>
+                    </div>
+                    <div class="stream-actions">
+                        <div class="action-group">
+                            <button class="action-btn" onclick="toggleRecording()">
+                                <i class="fas fa-circle" id="recIcon"></i> <span id="recText">Opname</span>
+                            </button>
+                            <button class="action-btn" onclick="toggleFullscreen()">
+                                <i class="fas fa-expand"></i> Fullscreen
+                            </button>
+                            <a href="#" id="twitchLink" target="_blank" class="action-btn">
+                                <i class="fab fa-twitch"></i> Twitch
+                            </a>
+                        </div>
+                        <div class="stream-uptime">
+                            <i class="fas fa-clock"></i> <span id="streamUptime">--:--:--</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="info-content hidden" id="infoContent">
-                    <div class="info-card">
-                        <h4><i class="fas fa-user"></i> Kanaal Info</h4>
-                        <div class="info-grid">
-                            <div class="info-item">
-                                <span class="info-label">Naam</span>
-                                <span class="info-value">tiesgames22222</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Status</span>
-                                <span class="info-value" id="infoStatus">Checking...</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Game</span>
-                                <span class="info-value" id="infoGame">-</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Kijkers</span>
-                                <span class="info-value" id="infoViewers">0</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Stream Titel</span>
-                                <span class="info-value" id="infoTitle">-</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Uptime</span>
-                                <span class="info-value" id="infoUptime">-</span>
+                <!-- Right Panel: Chat + Viewers -->
+                <div class="right-panel">
+                    <div class="panel-tabs">
+                        <button class="panel-tab active" onclick="switchPanel('chat')">
+                            <i class="fas fa-comments"></i> Chat
+                        </button>
+                        <button class="panel-tab" onclick="switchPanel('viewers')">
+                            <i class="fas fa-users"></i> Kijkers <span class="viewer-badge-count" id="viewerBadge">0</span>
+                        </button>
+                        <button class="panel-tab" onclick="switchPanel('quick')">
+                            <i class="fas fa-paper-plane"></i> Snel
+                        </button>
+                    </div>
+
+                    <!-- Chat Panel -->
+                    <div class="panel-content" id="panelChat">
+                        <div id="twitch-chat"></div>
+                    </div>
+
+                    <!-- Viewers Panel -->
+                    <div class="panel-content hidden" id="panelViewers">
+                        <div class="viewers-header">
+                            <h4><i class="fas fa-users"></i> Live Kijkers</h4>
+                            <span class="viewer-total" id="viewerTotal">0</span>
+                        </div>
+                        <div class="viewers-list" id="viewersList">
+                            <div class="viewers-loading">
+                                <i class="fas fa-spinner fa-spin"></i> Kijkers laden...
                             </div>
                         </div>
                     </div>
-                </div>
-            </aside>
-        </div>
 
-        <!-- Stats Section -->
-        <section class="stats-section" id="stats-section">
-            <div class="stat-card">
-                <div class="stat-icon"><i class="fas fa-eye"></i></div>
-                <div class="stat-info">
-                    <h4>Huidige Kijkers</h4>
-                    <span class="stat-value" id="statViewers">0</span>
+                    <!-- Quick Messages Panel -->
+                    <div class="panel-content hidden" id="panelQuick">
+                        <div class="quick-panel-header">
+                            <h4><i class="fas fa-paper-plane"></i> Snelle Berichten</h4>
+                            <p>Klik om direct te versturen</p>
+                        </div>
+                        <div class="quick-send-list" id="quickSendList">
+                            <p class="empty-state">Nog geen snelle berichten. Voeg ze toe in Instellingen.</p>
+                        </div>
+                        <div class="quick-custom">
+                            <input type="text" id="quickCustomMsg" placeholder="Typ een bericht..." onkeypress="if(event.key==='Enter')sendQuickCustom()">
+                            <button onclick="sendQuickCustom()"><i class="fas fa-paper-plane"></i></button>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="stat-card">
-                <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
-                <div class="stat-info">
-                    <h4>Piek Kijkers</h4>
-                    <span class="stat-value" id="statPeakViewers">0</span>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon"><i class="fas fa-clock"></i></div>
-                <div class="stat-info">
-                    <h4>Stream Uptime</h4>
-                    <span class="stat-value" id="statUptime">-</span>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon"><i class="fas fa-heart"></i></div>
-                <div class="stat-info">
-                    <h4>Volgers</h4>
-                    <span class="stat-value" id="statFollowers">-</span>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon"><i class="fas fa-video"></i></div>
-                <div class="stat-info">
-                    <h4>Opnames</h4>
-                    <span class="stat-value" id="statRecordings">0</span>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon"><i class="fas fa-bell"></i></div>
-                <div class="stat-info">
-                    <h4>Events</h4>
-                    <span class="stat-value" id="statEvents">0</span>
-                </div>
-            </div>
-        </section>
 
-        <!-- Viewer Graph -->
-        <section class="graph-section">
-            <div class="graph-card">
-                <h3><i class="fas fa-chart-area"></i> Kijkers Over Tijd</h3>
-                <canvas id="viewerChart" height="200"></canvas>
-            </div>
-        </section>
-
-        <!-- Recordings Section -->
-        <section class="recordings-section" id="recordings-section">
-            <h2><i class="fas fa-film"></i> Opnames</h2>
-            <div class="recordings-grid" id="recordingsGrid">
-                <div class="no-recordings">
-                    <i class="fas fa-video-slash"></i>
-                    <p>Nog geen opnames. Klik op "Opname" wanneer de stream live is!</p>
+            <!-- Stats Section -->
+            <section class="stats-section" id="stats-section">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-eye"></i></div>
+                    <div class="stat-info">
+                        <h4>Kijkers Nu</h4>
+                        <span class="stat-value" id="statViewers">0</span>
+                    </div>
                 </div>
-            </div>
-        </section>
-    </main>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+                    <div class="stat-info">
+                        <h4>Piek Kijkers</h4>
+                        <span class="stat-value" id="statPeakViewers">0</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                    <div class="stat-info">
+                        <h4>Uptime</h4>
+                        <span class="stat-value" id="statUptime">-</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-video"></i></div>
+                    <div class="stat-info">
+                        <h4>Opnames</h4>
+                        <span class="stat-value" id="statRecordings">0</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-paper-plane"></i></div>
+                    <div class="stat-info">
+                        <h4>Berichten Verstuurd</h4>
+                        <span class="stat-value" id="statMessages">0</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-history"></i></div>
+                    <div class="stat-info">
+                        <h4>Sessies</h4>
+                        <span class="stat-value" id="statSessions">0</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Viewer Graph -->
+            <section class="graph-section">
+                <div class="graph-card">
+                    <h3><i class="fas fa-chart-area"></i> Kijkers Over Tijd</h3>
+                    <canvas id="viewerChart" height="180"></canvas>
+                </div>
+            </section>
+
+            <!-- Recordings -->
+            <section class="recordings-section" id="recordings-section">
+                <h2><i class="fas fa-film"></i> Opnames</h2>
+                <div class="recordings-grid" id="recordingsGrid">
+                    <div class="no-recordings">
+                        <i class="fas fa-video-slash"></i>
+                        <p>Nog geen opnames.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Message Log -->
+            <section class="message-log-section">
+                <h2><i class="fas fa-history"></i> Berichten Log</h2>
+                <div class="message-log" id="messageLog">
+                    <p class="empty-state">Verstuurde berichten verschijnen hier.</p>
+                </div>
+            </section>
+        </main>
+    </div>
 
     <div class="notification-container" id="notifications"></div>
 
-    <!-- Twitch Embed Script -->
     <script src="https://embed.twitch.tv/embed/v1.js"></script>
     <script src="app.js"></script>
 </body>
