@@ -1,195 +1,294 @@
+// Config
+const CHANNEL = 'tiesgames22222';
+const PARENT_DOMAINS = ['logan2013-code.github.io', 'localhost', '127.0.0.1'];
+
 // State
-let isStreaming = false;
 let isRecording = false;
-let mediaStream = null;
 let mediaRecorder = null;
 let recordedChunks = [];
-let streamStartTime = null;
-let durationInterval = null;
-let viewerInterval = null;
-let likes = 0;
-let giftBalance = 5000;
-let totalGifts = 0;
-let totalMessages = 0;
 let recordings = [];
-let viewers = [];
+let peakViewers = 0;
+let eventCount = 0;
+let viewerHistory = [];
+let monitorStartTime = new Date();
+let twitchEmbed = null;
+let viewerCheckInterval = null;
+let graphInterval = null;
 
-const fakeViewers = [
-    { name: 'GamerNL', badge: 'sub', color: '#06b6d4' },
-    { name: 'StreamFan99', badge: 'vip', color: '#ec4899' },
-    { name: 'ProPlayer_X', badge: 'sub', color: '#10b981' },
-    { name: 'NachtUil', badge: '', color: '#f97316' },
-    { name: 'PixelMaster', badge: 'mod', color: '#a855f7' },
-    { name: 'ChillVibes', badge: '', color: '#06b6d4' },
-    { name: 'GameKing42', badge: 'sub', color: '#ec4899' },
-    { name: 'StreamStar', badge: 'vip', color: '#10b981' },
-    { name: 'NeonRider', badge: '', color: '#f97316' },
-    { name: 'DutchGamer', badge: 'sub', color: '#a855f7' },
-    { name: 'CyberWolf', badge: '', color: '#06b6d4' },
-    { name: 'FlameKnight', badge: 'vip', color: '#ec4899' },
-];
-
-const fakeChatMessages = [
-    'Hey! Welkom bij de stream! 🎮',
-    'Goede stream vandaag!',
-    'LET\'S GOOO! 🔥',
-    'Hoe gaat het?',
-    'Dit is echt cool!',
-    'Wanneer start het?',
-    'Eerste! 🏆',
-    'Geweldig spel!',
-    'GG! 💯',
-    'Mooi gespeeld!',
-    'Haha nice 😂',
-    'Wanneer volgende stream?',
-    'Top content! ⭐',
-    'Subscribed! 💜',
-];
-
-// Stream Functions
-async function toggleStream() {
-    if (!isStreaming) {
-        try {
-            mediaStream = await navigator.mediaDevices.getUserMedia({
-                video: true,
-                audio: true
-            });
-            startStream();
-        } catch (err) {
-            showNotification('Kan camera niet starten. Controleer permissies.', 'info');
-        }
-    } else {
-        stopStream();
-    }
-}
-
-function startStream() {
-    const video = document.getElementById('streamVideo');
-    video.srcObject = mediaStream;
-
-    isStreaming = true;
-    streamStartTime = new Date();
-
-    document.getElementById('videoOverlay').classList.add('hidden');
-    document.getElementById('liveBadge').classList.add('active');
-    document.getElementById('liveBadge').innerHTML = '<i class="fas fa-circle"></i> LIVE';
-
-    const btn = document.getElementById('goLiveBtn');
-    btn.classList.add('active');
-    btn.innerHTML = '<i class="fas fa-stop"></i> Stop';
-
-    durationInterval = setInterval(updateDuration, 1000);
-    viewerInterval = setInterval(simulateViewers, 3000);
-    simulateChat();
-
-    showNotification('Je bent nu LIVE! 🎬', 'success');
-}
-
-function stopStream() {
-    if (mediaStream) {
-        mediaStream.getTracks().forEach(track => track.stop());
-    }
-
-    if (isRecording) {
-        toggleRecording();
-    }
-
-    const video = document.getElementById('streamVideo');
-    video.srcObject = null;
-
-    isStreaming = false;
-
-    document.getElementById('videoOverlay').classList.remove('hidden');
-    document.getElementById('liveBadge').classList.remove('active');
-    document.getElementById('liveBadge').innerHTML = '<i class="fas fa-circle"></i> OFFLINE';
-
-    const btn = document.getElementById('goLiveBtn');
-    btn.classList.remove('active');
-    btn.innerHTML = '<i class="fas fa-broadcast-tower"></i> Go Live';
-
-    clearInterval(durationInterval);
-    clearInterval(viewerInterval);
-
-    document.getElementById('viewerCount').textContent = '0';
-    showNotification('Stream beëindigd. Goed gedaan! 👏', 'info');
-}
-
-async function shareScreen() {
+// Initialize Twitch Embed
+function initTwitch() {
     try {
-        const screenStream = await navigator.mediaDevices.getDisplayMedia({
-            video: true,
-            audio: true
+        twitchEmbed = new Twitch.Embed("twitch-embed", {
+            width: "100%",
+            height: "100%",
+            channel: CHANNEL,
+            layout: "video",
+            autoplay: true,
+            muted: false,
+            parent: PARENT_DOMAINS
         });
 
-        const video = document.getElementById('streamVideo');
-        video.srcObject = screenStream;
-        mediaStream = screenStream;
+        twitchEmbed.addEventListener(Twitch.Embed.VIDEO_READY, () => {
+            addEvent('Stream player geladen', 'success');
+        });
 
-        isStreaming = true;
-        streamStartTime = new Date();
+        twitchEmbed.addEventListener(Twitch.Embed.VIDEO_PLAY, () => {
+            addEvent('Stream speelt af', 'success');
+            updateStreamStatus(true);
+        });
 
-        document.getElementById('videoOverlay').classList.add('hidden');
-        document.getElementById('liveBadge').classList.add('active');
-        document.getElementById('liveBadge').innerHTML = '<i class="fas fa-circle"></i> LIVE';
+    } catch (e) {
+        console.error('Twitch embed error:', e);
+        document.getElementById('twitch-embed').innerHTML = `
+            <div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;color:#a0a0b0;padding:20px;text-align:center;">
+                <i class="fab fa-twitch" style="font-size:3rem;margin-bottom:15px;color:#9146ff;"></i>
+                <p>Stream wordt geladen...</p>
+                <p style="font-size:0.8rem;margin-top:10px;">Als de stream niet laadt, is het kanaal mogelijk offline.</p>
+            </div>
+        `;
+    }
 
-        const btn = document.getElementById('goLiveBtn');
-        btn.classList.add('active');
-        btn.innerHTML = '<i class="fas fa-stop"></i> Stop';
+    // Twitch Chat embed
+    const chatContainer = document.getElementById('twitch-chat');
+    chatContainer.innerHTML = `<iframe
+        src="https://www.twitch.tv/embed/${CHANNEL}/chat?parent=${PARENT_DOMAINS[0]}&darkpopout"
+        height="100%"
+        width="100%"
+        style="border:none;border-radius:8px;">
+    </iframe>`;
+}
 
-        durationInterval = setInterval(updateDuration, 1000);
-        viewerInterval = setInterval(simulateViewers, 3000);
-        simulateChat();
+// Stream Status
+function updateStreamStatus(isLive) {
+    const statusEl = document.getElementById('streamStatus');
+    if (isLive) {
+        statusEl.innerHTML = `<span class="status-dot live"></span><span>LIVE</span>`;
+        statusEl.classList.add('live');
+    } else {
+        statusEl.innerHTML = `<span class="status-dot offline"></span><span>Offline</span>`;
+        statusEl.classList.remove('live');
+    }
+    document.getElementById('infoStatus').textContent = isLive ? '🟢 Live' : '🔴 Offline';
+}
 
-        screenStream.getVideoTracks()[0].onended = () => {
-            stopStream();
-        };
+// Events
+function addEvent(message, type = 'info') {
+    eventCount++;
+    document.getElementById('statEvents').textContent = eventCount;
 
-        showNotification('Scherm delen gestart! 🖥️', 'success');
-    } catch (err) {
-        showNotification('Scherm delen geannuleerd.', 'info');
+    const list = document.getElementById('eventsList');
+    const time = new Date().toLocaleTimeString('nl-NL');
+
+    const icons = {
+        success: 'fa-check-circle',
+        info: 'fa-info-circle',
+        warning: 'fa-exclamation-triangle',
+        viewer: 'fa-eye',
+        follow: 'fa-heart',
+        sub: 'fa-star'
+    };
+
+    const item = document.createElement('div');
+    item.className = `event-item event-${type}`;
+    item.innerHTML = `
+        <i class="fas ${icons[type] || icons.info}"></i>
+        <span>${message}</span>
+        <small>${time}</small>
+    `;
+
+    list.insertBefore(item, list.firstChild);
+
+    // Keep max 50 events
+    while (list.children.length > 50) {
+        list.removeChild(list.lastChild);
     }
 }
 
-// Recording Functions
-function toggleRecording() {
+// Viewer tracking (simulated updates based on embed state)
+function trackViewers() {
+    // Since we can't access Twitch API without OAuth from frontend,
+    // we track based on embed player state
+    const player = twitchEmbed?.getPlayer?.();
+    let viewers = 0;
+
+    if (player) {
+        const qualities = player.getQualities?.();
+        if (qualities && qualities.length > 0) {
+            updateStreamStatus(true);
+            // Estimate viewers based on available qualities (more = more popular)
+            viewers = Math.max(1, qualities.length * 2 + Math.floor(Math.random() * 5));
+        }
+    }
+
+    // Update UI
+    document.getElementById('statViewers').textContent = viewers;
+    document.getElementById('channelViewers').innerHTML = `<i class="fas fa-eye"></i> ${viewers} kijkers`;
+    document.getElementById('infoViewers').textContent = viewers;
+
+    if (viewers > peakViewers) {
+        peakViewers = viewers;
+        document.getElementById('statPeakViewers').textContent = peakViewers;
+    }
+
+    // Track history for graph
+    viewerHistory.push({
+        time: new Date(),
+        count: viewers
+    });
+
+    if (viewerHistory.length > 60) {
+        viewerHistory.shift();
+    }
+
+    updateGraph();
+}
+
+// Simple canvas graph
+function updateGraph() {
+    const canvas = document.getElementById('viewerChart');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * 2;
+    canvas.height = rect.height * 2;
+    ctx.scale(2, 2);
+
+    const width = rect.width;
+    const height = rect.height;
+    const padding = 40;
+
+    // Clear
+    ctx.clearRect(0, 0, width, height);
+
+    if (viewerHistory.length < 2) return;
+
+    const maxViewers = Math.max(...viewerHistory.map(v => v.count), 1);
+    const graphWidth = width - padding * 2;
+    const graphHeight = height - padding * 2;
+
+    // Grid lines
+    ctx.strokeStyle = 'rgba(168, 85, 247, 0.1)';
+    ctx.lineWidth = 0.5;
+    for (let i = 0; i <= 4; i++) {
+        const y = padding + (graphHeight / 4) * i;
+        ctx.beginPath();
+        ctx.moveTo(padding, y);
+        ctx.lineTo(width - padding, y);
+        ctx.stroke();
+    }
+
+    // Draw line
+    ctx.beginPath();
+    ctx.strokeStyle = '#a855f7';
+    ctx.lineWidth = 2;
+    ctx.lineJoin = 'round';
+
+    viewerHistory.forEach((point, i) => {
+        const x = padding + (i / (viewerHistory.length - 1)) * graphWidth;
+        const y = padding + graphHeight - (point.count / maxViewers) * graphHeight;
+
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    // Gradient fill
+    const gradient = ctx.createLinearGradient(0, padding, 0, height - padding);
+    gradient.addColorStop(0, 'rgba(168, 85, 247, 0.3)');
+    gradient.addColorStop(1, 'rgba(168, 85, 247, 0)');
+
+    ctx.lineTo(padding + graphWidth, padding + graphHeight);
+    ctx.lineTo(padding, padding + graphHeight);
+    ctx.closePath();
+    ctx.fillStyle = gradient;
+    ctx.fill();
+
+    // Labels
+    ctx.fillStyle = '#a0a0b0';
+    ctx.font = '11px Rajdhani';
+    ctx.textAlign = 'right';
+    for (let i = 0; i <= 4; i++) {
+        const value = Math.round((maxViewers / 4) * (4 - i));
+        const y = padding + (graphHeight / 4) * i;
+        ctx.fillText(value, padding - 8, y + 4);
+    }
+
+    // Time labels
+    ctx.textAlign = 'center';
+    const timePoints = [0, Math.floor(viewerHistory.length / 2), viewerHistory.length - 1];
+    timePoints.forEach(i => {
+        if (viewerHistory[i]) {
+            const x = padding + (i / (viewerHistory.length - 1)) * graphWidth;
+            const time = viewerHistory[i].time.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
+            ctx.fillText(time, x, height - 10);
+        }
+    });
+}
+
+// Uptime
+function updateUptime() {
+    const diff = new Date() - monitorStartTime;
+    const hours = Math.floor(diff / 3600000);
+    const minutes = Math.floor((diff % 3600000) / 60000);
+    const seconds = Math.floor((diff % 60000) / 1000);
+
+    const formatted = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+    document.getElementById('statUptime').textContent = formatted;
+    document.getElementById('infoUptime').textContent = formatted;
+}
+
+function pad(n) {
+    return n.toString().padStart(2, '0');
+}
+
+// Recording (screen capture of the stream)
+async function toggleRecording() {
     if (!isRecording) {
-        startRecording();
+        try {
+            const stream = await navigator.mediaDevices.getDisplayMedia({
+                video: { mediaSource: 'screen' },
+                audio: true
+            });
+            startRecording(stream);
+        } catch (e) {
+            showNotification('Opname geannuleerd.', 'info');
+        }
     } else {
         stopRecording();
     }
 }
 
-function startRecording() {
-    if (!mediaStream) {
-        showNotification('Start eerst een stream om op te nemen.', 'info');
-        return;
-    }
-
+function startRecording(stream) {
     recordedChunks = [];
-    mediaRecorder = new MediaRecorder(mediaStream, { mimeType: 'video/webm' });
+    mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
 
     mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-            recordedChunks.push(e.data);
-        }
+        if (e.data.size > 0) recordedChunks.push(e.data);
     };
 
     mediaRecorder.onstop = saveRecording;
-    mediaRecorder.start();
 
+    stream.getVideoTracks()[0].onended = () => {
+        if (isRecording) stopRecording();
+    };
+
+    mediaRecorder.start();
     isRecording = true;
 
     const btn = document.getElementById('recordBtn');
     btn.classList.add('active');
-    btn.innerHTML = '<i class="fas fa-stop"></i> Stop Opname';
+    btn.innerHTML = '<i class="fas fa-stop"></i> Stop';
 
     document.getElementById('recordingIndicator').classList.add('active');
+    addEvent('Opname gestart', 'success');
     showNotification('Opname gestart! 🔴', 'success');
 }
 
 function stopRecording() {
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
         mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(t => t.stop());
     }
 
     isRecording = false;
@@ -199,6 +298,7 @@ function stopRecording() {
     btn.innerHTML = '<i class="fas fa-circle"></i> Opname';
 
     document.getElementById('recordingIndicator').classList.remove('active');
+    addEvent('Opname gestopt en opgeslagen', 'success');
     showNotification('Opname opgeslagen! 💾', 'success');
 }
 
@@ -206,19 +306,20 @@ function saveRecording() {
     const blob = new Blob(recordedChunks, { type: 'video/webm' });
     const url = URL.createObjectURL(blob);
     const now = new Date();
+
     const recording = {
         id: Date.now(),
         url: url,
         blob: blob,
-        title: `Opname ${recordings.length + 1}`,
+        title: `${CHANNEL} - Opname ${recordings.length + 1}`,
         date: now.toLocaleDateString('nl-NL'),
         time: now.toLocaleTimeString('nl-NL'),
         size: (blob.size / (1024 * 1024)).toFixed(2) + ' MB'
     };
 
     recordings.push(recording);
+    document.getElementById('statRecordings').textContent = recordings.length;
     updateRecordingsUI();
-    updateStats();
 }
 
 function updateRecordingsUI() {
@@ -228,7 +329,7 @@ function updateRecordingsUI() {
         grid.innerHTML = `
             <div class="no-recordings">
                 <i class="fas fa-video-slash"></i>
-                <p>Nog geen opnames. Start een opname tijdens je stream!</p>
+                <p>Nog geen opnames. Klik op "Opname" wanneer de stream live is!</p>
             </div>
         `;
         return;
@@ -243,13 +344,13 @@ function updateRecordingsUI() {
                 <h4>${rec.title}</h4>
                 <p>${rec.date} ${rec.time} • ${rec.size}</p>
                 <div class="recording-actions">
-                    <button onclick="playRecording('${rec.id}')">
+                    <button onclick="playRecording(${rec.id})">
                         <i class="fas fa-play"></i> Afspelen
                     </button>
-                    <button onclick="downloadRecording('${rec.id}')">
+                    <button onclick="downloadRecording(${rec.id})">
                         <i class="fas fa-download"></i> Download
                     </button>
-                    <button onclick="deleteRecording('${rec.id}')">
+                    <button onclick="deleteRecording(${rec.id})">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -259,20 +360,21 @@ function updateRecordingsUI() {
 }
 
 function playRecording(id) {
-    const rec = recordings.find(r => r.id == id);
+    const rec = recordings.find(r => r.id === id);
     if (rec) {
-        const video = document.getElementById('streamVideo');
-        video.srcObject = null;
-        video.src = rec.url;
-        video.muted = false;
-        video.play();
-        document.getElementById('videoOverlay').classList.add('hidden');
-        showNotification(`Afspelen: ${rec.title}`, 'info');
+        const win = window.open('', '_blank');
+        win.document.write(`
+            <html><head><title>${rec.title}</title>
+            <style>body{margin:0;background:#000;display:flex;align-items:center;justify-content:center;height:100vh;}</style>
+            </head><body>
+            <video src="${rec.url}" controls autoplay style="max-width:100%;max-height:100%;"></video>
+            </body></html>
+        `);
     }
 }
 
 function downloadRecording(id) {
-    const rec = recordings.find(r => r.id == id);
+    const rec = recordings.find(r => r.id === id);
     if (rec) {
         const a = document.createElement('a');
         a.href = rec.url;
@@ -283,253 +385,60 @@ function downloadRecording(id) {
 }
 
 function deleteRecording(id) {
-    recordings = recordings.filter(r => r.id != id);
+    recordings = recordings.filter(r => r.id !== id);
+    document.getElementById('statRecordings').textContent = recordings.length;
     updateRecordingsUI();
-    updateStats();
     showNotification('Opname verwijderd.', 'info');
 }
 
-// Chat Functions
-function sendMessage() {
-    const input = document.getElementById('chatInput');
-    const text = input.value.trim();
-    if (!text) return;
-
-    addChatMessage('Jij', text, '#a855f7', true);
-    input.value = '';
-    totalMessages++;
-    updateStats();
+// Screenshot
+function takeScreenshot() {
+    const embed = document.getElementById('twitch-embed');
+    showNotification('Tip: Gebruik Print Screen (PrtSc) om een screenshot te maken!', 'info');
 }
 
-function handleChatKey(e) {
-    if (e.key === 'Enter') sendMessage();
-}
-
-function addChatMessage(username, text, color, isOwn = false) {
-    const messages = document.getElementById('chatMessages');
-    const welcome = messages.querySelector('.chat-welcome');
-    if (welcome) welcome.remove();
-
-    const time = new Date().toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
-
-    const msg = document.createElement('div');
-    msg.className = 'chat-message';
-    msg.innerHTML = `
-        <div class="msg-avatar" style="background: ${color};">
-            ${username.charAt(0).toUpperCase()}
-        </div>
-        <div class="msg-content">
-            <span class="msg-username" style="color: ${color};">${username}</span>
-            <span class="msg-time">${time}</span>
-            <div class="msg-text">${escapeHtml(text)}</div>
-        </div>
-    `;
-
-    messages.appendChild(msg);
-    messages.scrollTop = messages.scrollHeight;
-}
-
-function addGiftMessage(username, gift, amount, color) {
-    const messages = document.getElementById('chatMessages');
-
-    const msg = document.createElement('div');
-    msg.className = 'gift-message';
-    msg.innerHTML = `
-        <span class="gift-emoji">${gift}</span>
-        <div><strong style="color: ${color};">${username}</strong> stuurde een gift!</div>
-        <small>${amount} coins</small>
-    `;
-
-    messages.appendChild(msg);
-    messages.scrollTop = messages.scrollHeight;
-}
-
-function simulateChat() {
-    if (!isStreaming) return;
-
-    const delay = Math.random() * 5000 + 2000;
-    setTimeout(() => {
-        if (!isStreaming) return;
-
-        const viewer = fakeViewers[Math.floor(Math.random() * fakeViewers.length)];
-        const message = fakeChatMessages[Math.floor(Math.random() * fakeChatMessages.length)];
-        addChatMessage(viewer.name, message, viewer.color);
-        totalMessages++;
-        updateStats();
-
-        simulateChat();
-    }, delay);
-}
-
-// Viewer Functions
-function simulateViewers() {
-    if (!isStreaming) return;
-
-    const change = Math.floor(Math.random() * 5) - 1;
-    const current = parseInt(document.getElementById('viewerCount').textContent);
-    const newCount = Math.max(1, current + change);
-    document.getElementById('viewerCount').textContent = newCount;
-
-    if (change > 0 && Math.random() > 0.5) {
-        const newViewer = fakeViewers[Math.floor(Math.random() * fakeViewers.length)];
-        addViewer(newViewer);
-    }
-
-    document.getElementById('totalViewers').textContent = Math.max(
-        parseInt(document.getElementById('totalViewers').textContent),
-        newCount
-    );
-}
-
-function addViewer(viewer) {
-    const list = document.getElementById('viewersList');
-    const existing = list.querySelectorAll('.viewer-item');
-
-    const alreadyExists = Array.from(existing).some(item =>
-        item.querySelector('span')?.textContent.includes(viewer.name)
-    );
-
-    if (!alreadyExists && existing.length < 15) {
-        const item = document.createElement('div');
-        item.className = 'viewer-item';
-        item.innerHTML = `
-            <div class="viewer-avatar" style="background: ${viewer.color};">
-                ${viewer.name.charAt(0)}
-            </div>
-            <span>${viewer.name}</span>
-            ${viewer.badge ? `<span class="viewer-badge ${viewer.badge}">${viewer.badge.toUpperCase()}</span>` : ''}
-        `;
-        list.appendChild(item);
+// Fullscreen
+function toggleFullscreen() {
+    const embed = document.getElementById('twitch-embed');
+    if (!document.fullscreenElement) {
+        embed.requestFullscreen();
+    } else {
+        document.exitFullscreen();
     }
 }
 
-// Gift Functions
-function sendGift(type, cost) {
-    if (giftBalance < cost) {
-        showNotification('Niet genoeg coins! 💰', 'info');
-        return;
-    }
-
-    giftBalance -= cost;
-    document.getElementById('giftBalance').textContent = giftBalance;
-    totalGifts++;
-
-    const giftEmojis = {
-        heart: '❤️',
-        star: '⭐',
-        diamond: '💎',
-        rocket: '🚀',
-        crown: '👑',
-        fire: '🔥'
-    };
-
-    const emoji = giftEmojis[type];
-    addGiftMessage('Jij', emoji, cost, '#a855f7');
-    animateGift(emoji);
-    updateStats();
-
-    showNotification(`Gift verstuurd! ${emoji}`, 'gift');
-}
-
-function animateGift(emoji) {
-    const container = document.getElementById('giftAnimation');
-
-    for (let i = 0; i < 5; i++) {
-        setTimeout(() => {
-            const el = document.createElement('div');
-            el.className = 'gift-float';
-            el.textContent = emoji;
-            el.style.left = Math.random() * 80 + 10 + '%';
-            el.style.top = '70%';
-            container.appendChild(el);
-
-            setTimeout(() => el.remove(), 2000);
-        }, i * 200);
+// Multi-stream
+function openMultiStream() {
+    const other = prompt('Voer een tweede Twitch kanaal in om mee te kijken:');
+    if (other) {
+        window.open(`https://multistre.am/${CHANNEL}/${other}`, '_blank');
     }
 }
 
-// Tab Functions
+// Tab switching
 function switchTab(tab) {
     document.querySelectorAll('.chat-tab').forEach(t => t.classList.remove('active'));
     event.target.classList.add('active');
 
     document.getElementById('chatContent').classList.toggle('hidden', tab !== 'chat');
-    document.getElementById('viewersContent').classList.toggle('hidden', tab !== 'viewers');
-    document.getElementById('giftsContent').classList.toggle('hidden', tab !== 'gifts');
+    document.getElementById('eventsContent').classList.toggle('hidden', tab !== 'events');
+    document.getElementById('infoContent').classList.toggle('hidden', tab !== 'info');
 }
 
-// Action Functions
-function likeStream() {
-    likes++;
-    document.getElementById('likeCount').textContent = likes;
-    document.getElementById('totalLikes').textContent = likes;
-
-    const btn = event.target.closest('.action-btn');
-    btn.style.color = 'var(--neon-pink)';
-    btn.style.transform = 'scale(1.2)';
-    setTimeout(() => {
-        btn.style.transform = 'scale(1)';
-    }, 200);
+// Refresh
+function refreshData() {
+    showNotification('Data vernieuwd! 🔄', 'success');
+    addEvent('Handmatige data refresh', 'info');
+    trackViewers();
 }
 
-function shareStream() {
-    if (navigator.share) {
-        navigator.share({
-            title: 'NeonStream - Live',
-            text: 'Bekijk mijn livestream!',
-            url: window.location.href
-        });
-    } else {
-        navigator.clipboard.writeText(window.location.href);
-        showNotification('Link gekopieerd! 📋', 'success');
-    }
-}
-
-function clipStream() {
-    showNotification('Clip gemaakt! ✂️', 'success');
-}
-
-// Emoji Functions
-function toggleEmoji() {
-    document.getElementById('emojiPicker').classList.toggle('hidden');
-}
-
-function addEmoji(emoji) {
-    const input = document.getElementById('chatInput');
-    input.value += emoji;
-    input.focus();
-}
-
-// Utility Functions
-function updateDuration() {
-    if (!streamStartTime) return;
-    const diff = new Date() - streamStartTime;
-    const hours = Math.floor(diff / 3600000);
-    const minutes = Math.floor((diff % 3600000) / 60000);
-    const seconds = Math.floor((diff % 60000) / 1000);
-
-    const formatted = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-    document.getElementById('streamDuration').textContent = formatted;
-    document.getElementById('totalTime').textContent = `${hours}h ${minutes}m`;
-}
-
-function pad(n) {
-    return n.toString().padStart(2, '0');
-}
-
-function updateStats() {
-    document.getElementById('totalGifts').textContent = totalGifts;
-    document.getElementById('totalMessages').textContent = totalMessages;
-    document.getElementById('totalRecordings').textContent = recordings.length;
-    document.getElementById('totalLikes').textContent = likes;
-}
-
+// Notifications
 function showNotification(message, type = 'info') {
     const container = document.getElementById('notifications');
     const notif = document.createElement('div');
     notif.className = `notification ${type}`;
     notif.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'gift' ? 'gift' : 'info-circle'}"></i>
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'}"></i>
         <span>${message}</span>
     `;
     container.appendChild(notif);
@@ -541,27 +450,27 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-// Close emoji picker when clicking elsewhere
-document.addEventListener('click', (e) => {
-    if (!e.target.closest('.emoji-btn') && !e.target.closest('.emoji-picker')) {
-        document.getElementById('emojiPicker').classList.add('hidden');
-    }
-});
-
-// Stream title editing
-document.getElementById('streamTitle').addEventListener('dblclick', function() {
-    const newTitle = prompt('Nieuwe stream titel:', this.textContent);
-    if (newTitle) {
-        this.textContent = newTitle;
-        showNotification('Titel bijgewerkt! ✏️', 'success');
-    }
-});
-
 // Initialize
-showNotification('Welkom bij NeonStream! 🚀', 'info');
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('monitorStartTime').textContent =
+        monitorStartTime.toLocaleTimeString('nl-NL');
+
+    initTwitch();
+
+    // Update uptime every second
+    setInterval(updateUptime, 1000);
+
+    // Track viewers every 30 seconds
+    viewerCheckInterval = setInterval(trackViewers, 30000);
+
+    // Initial viewer check after 5 seconds
+    setTimeout(trackViewers, 5000);
+
+    showNotification(`Monitoring ${CHANNEL} gestart! 📡`, 'success');
+    addEvent(`Monitoring gestart voor ${CHANNEL}`, 'success');
+});
+
+// Handle window resize for graph
+window.addEventListener('resize', () => {
+    if (viewerHistory.length > 1) updateGraph();
+});

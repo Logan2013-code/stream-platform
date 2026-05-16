@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NeonStream - Live Streaming Platform</title>
+    <title>NeonStream - Twitch Monitor</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -22,252 +22,205 @@
             <span>NeonStream</span>
         </div>
         <div class="nav-links">
-            <a href="#" class="active"><i class="fas fa-home"></i> Home</a>
-            <a href="#"><i class="fas fa-compass"></i> Ontdek</a>
-            <a href="#"><i class="fas fa-users"></i> Volgers</a>
-            <a href="#"><i class="fas fa-cog"></i> Instellingen</a>
+            <a href="#" class="active"><i class="fas fa-tv"></i> Stream</a>
+            <a href="#stats-section"><i class="fas fa-chart-bar"></i> Stats</a>
+            <a href="#clips-section"><i class="fas fa-cut"></i> Clips</a>
+            <a href="#recordings-section"><i class="fas fa-video"></i> Opnames</a>
         </div>
         <div class="nav-user">
-            <div class="user-avatar">
-                <i class="fas fa-user"></i>
-                <span class="online-dot"></span>
+            <div class="stream-status" id="streamStatus">
+                <span class="status-dot offline"></span>
+                <span>Offline</span>
             </div>
-            <span class="username">Streamer</span>
         </div>
     </nav>
 
     <main class="main-content">
-        <div class="stream-section">
-            <div class="stream-container">
-                <div class="stream-header">
-                    <div class="stream-info">
-                        <h1 class="stream-title" id="streamTitle">Mijn Live Stream</h1>
-                        <div class="stream-meta">
-                            <span class="live-badge" id="liveBadge"><i class="fas fa-circle"></i> OFFLINE</span>
-                            <span class="viewer-count"><i class="fas fa-eye"></i> <span id="viewerCount">0</span> kijkers</span>
-                            <span class="stream-duration"><i class="fas fa-clock"></i> <span id="streamDuration">00:00:00</span></span>
-                        </div>
-                    </div>
-                    <div class="stream-controls">
-                        <button class="btn btn-go-live" id="goLiveBtn" onclick="toggleStream()">
-                            <i class="fas fa-broadcast-tower"></i> Go Live
-                        </button>
-                        <button class="btn btn-record" id="recordBtn" onclick="toggleRecording()">
-                            <i class="fas fa-circle"></i> Opname
-                        </button>
-                        <button class="btn btn-screen" onclick="shareScreen()">
-                            <i class="fas fa-desktop"></i> Scherm
-                        </button>
+        <!-- Channel Header -->
+        <div class="channel-header">
+            <div class="channel-info">
+                <div class="channel-avatar" id="channelAvatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="channel-details">
+                    <h1 class="channel-name">tiesgames22222</h1>
+                    <p class="channel-title" id="channelTitle">Twitch Stream Monitor</p>
+                    <div class="channel-meta">
+                        <span id="channelGame"><i class="fas fa-gamepad"></i> -</span>
+                        <span id="channelViewers"><i class="fas fa-eye"></i> 0 kijkers</span>
+                        <span id="channelFollowers"><i class="fas fa-heart"></i> - volgers</span>
                     </div>
                 </div>
+            </div>
+            <div class="channel-actions">
+                <button class="btn btn-primary" onclick="refreshData()">
+                    <i class="fas fa-sync-alt"></i> Vernieuw
+                </button>
+                <button class="btn btn-record" id="recordBtn" onclick="toggleRecording()">
+                    <i class="fas fa-circle"></i> Opname
+                </button>
+                <a href="https://twitch.tv/tiesgames22222" target="_blank" class="btn btn-twitch">
+                    <i class="fab fa-twitch"></i> Open Twitch
+                </a>
+            </div>
+        </div>
 
+        <!-- Stream + Chat -->
+        <div class="stream-section">
+            <div class="stream-container">
                 <div class="video-wrapper">
-                    <video id="streamVideo" autoplay muted playsinline></video>
-                    <div class="video-overlay" id="videoOverlay">
-                        <div class="overlay-content">
-                            <i class="fas fa-play-circle"></i>
-                            <p>Klik op "Go Live" om te beginnen</p>
-                        </div>
-                    </div>
-                    <div class="stream-watermark">
-                        <i class="fas fa-bolt"></i> NeonStream
-                    </div>
+                    <div id="twitch-embed"></div>
                     <div class="recording-indicator" id="recordingIndicator">
                         <i class="fas fa-circle"></i> REC
                     </div>
                 </div>
-
                 <div class="stream-actions">
                     <div class="action-group">
-                        <button class="action-btn" onclick="likeStream()">
-                            <i class="fas fa-heart"></i>
-                            <span id="likeCount">0</span>
+                        <button class="action-btn" onclick="takeScreenshot()">
+                            <i class="fas fa-camera"></i> Screenshot
                         </button>
-                        <button class="action-btn" onclick="shareStream()">
-                            <i class="fas fa-share"></i>
-                            Delen
+                        <button class="action-btn" onclick="toggleFullscreen()">
+                            <i class="fas fa-expand"></i> Volledig scherm
                         </button>
-                        <button class="action-btn" onclick="clipStream()">
-                            <i class="fas fa-cut"></i>
-                            Clip
+                        <button class="action-btn" onclick="openMultiStream()">
+                            <i class="fas fa-columns"></i> Multi-stream
                         </button>
                     </div>
-                    <div class="stream-tags">
-                        <span class="tag">Gaming</span>
-                        <span class="tag">Nederlands</span>
-                        <span class="tag">Live</span>
+                    <div class="stream-tags" id="streamTags">
+                        <span class="tag">Twitch</span>
+                        <span class="tag">Monitor</span>
                     </div>
                 </div>
             </div>
 
             <aside class="chat-section">
                 <div class="chat-header">
-                    <h3><i class="fas fa-comments"></i> Live Chat</h3>
+                    <h3><i class="fab fa-twitch"></i> Twitch Chat</h3>
                     <div class="chat-tabs">
                         <button class="chat-tab active" onclick="switchTab('chat')">Chat</button>
-                        <button class="chat-tab" onclick="switchTab('viewers')">Kijkers</button>
-                        <button class="chat-tab" onclick="switchTab('gifts')">Gifts</button>
+                        <button class="chat-tab" onclick="switchTab('events')">Events</button>
+                        <button class="chat-tab" onclick="switchTab('info')">Info</button>
                     </div>
                 </div>
 
                 <div class="chat-content" id="chatContent">
-                    <div class="chat-messages" id="chatMessages">
-                        <div class="chat-welcome">
-                            <i class="fas fa-sparkles"></i>
-                            <p>Welkom bij de chat! Wees respectvol.</p>
+                    <div id="twitch-chat"></div>
+                </div>
+
+                <div class="events-content hidden" id="eventsContent">
+                    <div class="events-list" id="eventsList">
+                        <div class="event-item">
+                            <i class="fas fa-info-circle"></i>
+                            <span>Monitoring gestart...</span>
+                            <small id="monitorStartTime"></small>
                         </div>
                     </div>
                 </div>
 
-                <div class="viewers-content hidden" id="viewersContent">
-                    <div class="viewers-list" id="viewersList">
-                        <div class="viewer-item">
-                            <div class="viewer-avatar" style="background: var(--neon-purple);">
-                                <i class="fas fa-crown"></i>
+                <div class="info-content hidden" id="infoContent">
+                    <div class="info-card">
+                        <h4><i class="fas fa-user"></i> Kanaal Info</h4>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">Naam</span>
+                                <span class="info-value">tiesgames22222</span>
                             </div>
-                            <span>Streamer (Jij)</span>
-                            <span class="viewer-badge mod">MOD</span>
+                            <div class="info-item">
+                                <span class="info-label">Status</span>
+                                <span class="info-value" id="infoStatus">Checking...</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Game</span>
+                                <span class="info-value" id="infoGame">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Kijkers</span>
+                                <span class="info-value" id="infoViewers">0</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Stream Titel</span>
+                                <span class="info-value" id="infoTitle">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Uptime</span>
+                                <span class="info-value" id="infoUptime">-</span>
+                            </div>
                         </div>
-                    </div>
-                </div>
-
-                <div class="gifts-content hidden" id="giftsContent">
-                    <div class="gifts-grid">
-                        <div class="gift-item" onclick="sendGift('heart', 10)">
-                            <div class="gift-icon">❤️</div>
-                            <span>Hart</span>
-                            <span class="gift-price">10</span>
-                        </div>
-                        <div class="gift-item" onclick="sendGift('star', 50)">
-                            <div class="gift-icon">⭐</div>
-                            <span>Ster</span>
-                            <span class="gift-price">50</span>
-                        </div>
-                        <div class="gift-item" onclick="sendGift('diamond', 100)">
-                            <div class="gift-icon">💎</div>
-                            <span>Diamant</span>
-                            <span class="gift-price">100</span>
-                        </div>
-                        <div class="gift-item" onclick="sendGift('rocket', 200)">
-                            <div class="gift-icon">🚀</div>
-                            <span>Raket</span>
-                            <span class="gift-price">200</span>
-                        </div>
-                        <div class="gift-item" onclick="sendGift('crown', 500)">
-                            <div class="gift-icon">👑</div>
-                            <span>Kroon</span>
-                            <span class="gift-price">500</span>
-                        </div>
-                        <div class="gift-item" onclick="sendGift('fire', 1000)">
-                            <div class="gift-icon">🔥</div>
-                            <span>Vuur</span>
-                            <span class="gift-price">1000</span>
-                        </div>
-                    </div>
-                    <div class="gift-balance">
-                        <i class="fas fa-coins"></i> Saldo: <span id="giftBalance">5000</span> coins
-                    </div>
-                </div>
-
-                <div class="chat-input-area">
-                    <div class="chat-input-wrapper">
-                        <button class="emoji-btn" onclick="toggleEmoji()">
-                            <i class="fas fa-smile"></i>
-                        </button>
-                        <input type="text" id="chatInput" placeholder="Stuur een bericht..." onkeypress="handleChatKey(event)">
-                        <button class="send-btn" onclick="sendMessage()">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
                     </div>
                 </div>
             </aside>
         </div>
 
-        <section class="stats-section">
+        <!-- Stats Section -->
+        <section class="stats-section" id="stats-section">
             <div class="stat-card">
                 <div class="stat-icon"><i class="fas fa-eye"></i></div>
                 <div class="stat-info">
-                    <h4>Totaal Kijkers</h4>
-                    <span class="stat-value" id="totalViewers">0</span>
+                    <h4>Huidige Kijkers</h4>
+                    <span class="stat-value" id="statViewers">0</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+                <div class="stat-info">
+                    <h4>Piek Kijkers</h4>
+                    <span class="stat-value" id="statPeakViewers">0</span>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon"><i class="fas fa-clock"></i></div>
                 <div class="stat-info">
-                    <h4>Stream Tijd</h4>
-                    <span class="stat-value" id="totalTime">0h 0m</span>
+                    <h4>Stream Uptime</h4>
+                    <span class="stat-value" id="statUptime">-</span>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon"><i class="fas fa-heart"></i></div>
                 <div class="stat-info">
-                    <h4>Totaal Likes</h4>
-                    <span class="stat-value" id="totalLikes">0</span>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon"><i class="fas fa-gift"></i></div>
-                <div class="stat-info">
-                    <h4>Gifts Ontvangen</h4>
-                    <span class="stat-value" id="totalGifts">0</span>
+                    <h4>Volgers</h4>
+                    <span class="stat-value" id="statFollowers">-</span>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon"><i class="fas fa-video"></i></div>
                 <div class="stat-info">
                     <h4>Opnames</h4>
-                    <span class="stat-value" id="totalRecordings">0</span>
+                    <span class="stat-value" id="statRecordings">0</span>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon"><i class="fas fa-comments"></i></div>
+                <div class="stat-icon"><i class="fas fa-bell"></i></div>
                 <div class="stat-info">
-                    <h4>Berichten</h4>
-                    <span class="stat-value" id="totalMessages">0</span>
+                    <h4>Events</h4>
+                    <span class="stat-value" id="statEvents">0</span>
                 </div>
             </div>
         </section>
 
-        <section class="recordings-section">
+        <!-- Viewer Graph -->
+        <section class="graph-section">
+            <div class="graph-card">
+                <h3><i class="fas fa-chart-area"></i> Kijkers Over Tijd</h3>
+                <canvas id="viewerChart" height="200"></canvas>
+            </div>
+        </section>
+
+        <!-- Recordings Section -->
+        <section class="recordings-section" id="recordings-section">
             <h2><i class="fas fa-film"></i> Opnames</h2>
             <div class="recordings-grid" id="recordingsGrid">
                 <div class="no-recordings">
                     <i class="fas fa-video-slash"></i>
-                    <p>Nog geen opnames. Start een opname tijdens je stream!</p>
+                    <p>Nog geen opnames. Klik op "Opname" wanneer de stream live is!</p>
                 </div>
             </div>
         </section>
     </main>
 
-    <div class="emoji-picker hidden" id="emojiPicker">
-        <div class="emoji-grid">
-            <span onclick="addEmoji('😀')">😀</span>
-            <span onclick="addEmoji('😂')">😂</span>
-            <span onclick="addEmoji('🥰')">🥰</span>
-            <span onclick="addEmoji('😎')">😎</span>
-            <span onclick="addEmoji('🔥')">🔥</span>
-            <span onclick="addEmoji('💯')">💯</span>
-            <span onclick="addEmoji('👑')">👑</span>
-            <span onclick="addEmoji('⭐')">⭐</span>
-            <span onclick="addEmoji('💎')">💎</span>
-            <span onclick="addEmoji('🎮')">🎮</span>
-            <span onclick="addEmoji('🎯')">🎯</span>
-            <span onclick="addEmoji('🏆')">🏆</span>
-            <span onclick="addEmoji('❤️')">❤️</span>
-            <span onclick="addEmoji('💜')">💜</span>
-            <span onclick="addEmoji('💙')">💙</span>
-            <span onclick="addEmoji('🤟')">🤟</span>
-            <span onclick="addEmoji('👏')">👏</span>
-            <span onclick="addEmoji('🎉')">🎉</span>
-            <span onclick="addEmoji('😱')">😱</span>
-            <span onclick="addEmoji('🤯')">🤯</span>
-        </div>
-    </div>
-
-    <div class="gift-animation" id="giftAnimation"></div>
-
     <div class="notification-container" id="notifications"></div>
 
+    <!-- Twitch Embed Script -->
+    <script src="https://embed.twitch.tv/embed/v1.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
