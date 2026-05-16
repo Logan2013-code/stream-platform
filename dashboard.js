@@ -309,9 +309,34 @@ function playSound(name) {
     if (btn) { btn.classList.add('sound-playing'); setTimeout(() => btn.classList.remove('sound-playing'), 500); }
 }
 
-// Chat Quick Actions
-function sendQuickChat(msg) {
-    showNotif(`Chat: "${msg}" verzonden!`);
+// Chat Quick Actions - sends to real Twitch chat
+async function sendQuickChat(msg) {
+    const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    if (!data.twitchToken || !data.twitchUser) {
+        showNotif('⚠ Verbind Twitch op de Monitor pagina om berichten te sturen');
+        return;
+    }
+    try {
+        const bRes = await fetch(`https://api.twitch.tv/helix/users?login=${channel}`, {
+            headers: { 'Authorization': `Bearer ${data.twitchToken}`, 'Client-Id': '2l6my3eh5ykvp352o18wvm6txvc5zn' }
+        });
+        const bData = await bRes.json();
+        const bId = bData.data?.[0]?.id;
+        if (!bId) { showNotif('⚠ Kan kanaal niet vinden'); return; }
+
+        const res = await fetch('https://api.twitch.tv/helix/chat/messages', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${data.twitchToken}`, 'Client-Id': '2l6my3eh5ykvp352o18wvm6txvc5zn', 'Content-Type': 'application/json' },
+            body: JSON.stringify({ broadcaster_id: bId, sender_id: data.twitchUser.id, message: msg })
+        });
+        if (res.ok) {
+            showNotif(`✓ Chat: "${msg}"`);
+        } else {
+            showNotif('⚠ Kon bericht niet versturen');
+        }
+    } catch(e) {
+        showNotif('⚠ Fout bij versturen');
+    }
 }
 
 // Activity Filter

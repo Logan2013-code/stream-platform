@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeonStream PRO — Ultimate Streaming Command Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="pro.css">
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="pro-bg">
+        <div class="bg-grid"></div>
+        <div class="bg-glow g1"></div>
+        <div class="bg-glow g2"></div>
+        <div class="bg-glow g3"></div>
+        <div class="bg-particles" id="particles"></div>
+    </div>
+
+    <!-- Top Bar -->
+    <header class="pro-topbar">
+        <div class="topbar-left">
+            <div class="pro-logo">
+                <div class="logo-icon"><i class="fas fa-bolt"></i></div>
+                <div class="logo-text">
+                    <span class="logo-name">NeonStream</span>
+                    <span class="logo-badge">PRO</span>
+                </div>
+            </div>
+        </div>
+        <nav class="topbar-nav">
+            <a href="#" class="tn-link active" data-page="dashboard"><i class="fas fa-grip-vertical"></i> Dashboard</a>
+            <a href="#" class="tn-link" data-page="studio"><i class="fas fa-wand-magic-sparkles"></i> Studio</a>
+            <a href="#" class="tn-link" data-page="analytics"><i class="fas fa-chart-line"></i> Analytics</a>
+            <a href="#" class="tn-link" data-page="monetize"><i class="fas fa-coins"></i> Monetize</a>
+            <a href="#" class="tn-link" data-page="community"><i class="fas fa-users"></i> Community</a>
+        </nav>
+        <div class="topbar-right">
+            <div class="live-indicator" id="liveIndicator">
+                <span class="live-pulse"></span>
+                <span class="live-text">LIVE</span>
+                <span class="live-viewers"><i class="fas fa-eye"></i> <span id="topViewers">0</span></span>
+                <span class="live-uptime" id="topUptime">00:00:00</span>
+            </div>
+            <button class="go-live-btn" id="goLiveBtn" onclick="toggleLive()">
+                <i class="fas fa-broadcast-tower"></i>
+                <span>Go Live</span>
+            </button>
+            <div class="user-avatar" onclick="toggleUserPanel()">
+                <img src="https://static-cdn.jtvnw.net/jtv_user_pictures/default-avatar.png" alt="">
+                <span class="avatar-status"></span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="pro-main">
+        <!-- ========== DASHBOARD PAGE ========== -->
+        <section class="pro-page active" id="pageDashboard">
+            <!-- Stream Command Row -->
+            <div class="cmd-row">
+                <div class="cmd-card stream-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-satellite-dish"></i> Stream Command</h3>
+                        <span class="card-badge online">Gereed</span>
+                    </div>
+                    <div class="stream-info-form">
+                        <div class="sif-group">
+                            <label>Titel</label>
+                            <input type="text" id="proStreamTitle" placeholder="Je stream titel..." value="Gaming met vrienden!">
+                        </div>
+                        <div class="sif-row">
+                            <div class="sif-group">
+                                <label>Categorie</label>
+                                <select id="proCategory">
+                                    <option>Just Chatting</option>
+                                    <option selected>Gaming</option>
+                                    <option>Music</option>
+                                    <option>Creative</option>
+                                    <option>IRL</option>
+                                    <option>Software & Game Dev</option>
+                                    <option>Esports</option>
+                                    <option>Education</option>
+                                    <option>Podcasts</option>
+                                </select>
+                            </div>
+                            <div class="sif-group">
+                                <label>Taal</label>
+                                <select><option>Nederlands</option><option>English</option></select>
+                            </div>
+                        </div>
+                        <div class="sif-tags">
+                            <span class="pro-tag">Gaming <i class="fas fa-xmark" onclick="this.parentElement.remove()"></i></span>
+                            <span class="pro-tag">Nederlands <i class="fas fa-xmark" onclick="this.parentElement.remove()"></i></span>
+                            <span class="pro-tag">Chill <i class="fas fa-xmark" onclick="this.parentElement.remove()"></i></span>
+                            <input type="text" placeholder="+ Tag" onkeydown="if(event.key==='Enter'){addProTag(this)}">
+                        </div>
+                    </div>
+                    <div class="stream-actions">
+                        <button class="sa-btn primary" onclick="toggleLive()"><i class="fas fa-broadcast-tower"></i> Go Live</button>
+                        <button class="sa-btn" onclick="toggleRecord()"><i class="fas fa-circle" id="proRecDot"></i> Opname</button>
+                        <button class="sa-btn" onclick="proClip()"><i class="fas fa-scissors"></i> Clip</button>
+                        <button class="sa-btn" onclick="proMarker()"><i class="fas fa-flag"></i> Marker</button>
+                    </div>
+                </div>
+
+                <div class="cmd-card stats-card">
+                    <div class="card-header"><h3><i class="fas fa-signal"></i> Live Metrics</h3></div>
+                    <div class="metrics-grid">
+                        <div class="metric-item"><div class="metric-val" id="mViewers">0</div><div class="metric-label">Kijkers</div><div class="metric-trend up"><i class="fas fa-arrow-up"></i> 12%</div></div>
+                        <div class="metric-item"><div class="metric-val" id="mFollowers">754</div><div class="metric-label">Volgers</div><div class="metric-trend up"><i class="fas fa-arrow-up"></i> +4</div></div>
+                        <div class="metric-item"><div class="metric-val" id="mSubs">12</div><div class="metric-label">Subs</div><div class="metric-trend neutral"><i class="fas fa-minus"></i> 0</div></div>
+                        <div class="metric-item"><div class="metric-val" id="mRevenue">€0</div><div class="metric-label">Revenue</div><div class="metric-trend up"><i class="fas fa-arrow-up"></i></div></div>
+                        <div class="metric-item"><div class="metric-val" id="mPeak">0</div><div class="metric-label">Peak</div><div class="metric-trend"></div></div>
+                        <div class="metric-item"><div class="metric-val" id="mChatRate">0/m</div><div class="metric-label">Chat Rate</div><div class="metric-trend"></div></div>
+                    </div>
+                </div>
+
+                <div class="cmd-card health-card">
+                    <div class="card-header"><h3><i class="fas fa-heartbeat"></i> Health</h3></div>
+                    <div class="health-bars">
+                        <div class="hb-item"><span class="hb-label">Bitrate</span><div class="hb-bar"><div class="hb-fill good" style="width:90%"></div></div><span class="hb-val">6000 kbps</span></div>
+                        <div class="hb-item"><span class="hb-label">FPS</span><div class="hb-bar"><div class="hb-fill good" style="width:100%"></div></div><span class="hb-val">60</span></div>
+                        <div class="hb-item"><span class="hb-label">CPU</span><div class="hb-bar"><div class="hb-fill warn" id="hbCpu" style="width:45%"></div></div><span class="hb-val" id="hbCpuVal">45%</span></div>
+                        <div class="hb-item"><span class="hb-label">GPU</span><div class="hb-bar"><div class="hb-fill good" style="width:35%"></div></div><span class="hb-val">35%</span></div>
+                        <div class="hb-item"><span class="hb-label">RAM</span><div class="hb-bar"><div class="hb-fill good" id="hbRam" style="width:62%"></div></div><span class="hb-val" id="hbRamVal">62%</span></div>
+                        <div class="hb-item"><span class="hb-label">Dropped</span><div class="hb-bar"><div class="hb-fill good" style="width:2%"></div></div><span class="hb-val">0.02%</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview + Chat Row -->
+            <div class="preview-row">
+                <div class="cmd-card preview-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-eye"></i> Live Preview</h3>
+                        <div class="preview-actions">
+                            <button onclick="proClip()" title="Clip"><i class="fas fa-scissors"></i></button>
+                            <button onclick="proMarker()" title="Marker"><i class="fas fa-flag"></i></button>
+                            <button onclick="proAd()" title="Ad Break"><i class="fas fa-ad"></i></button>
+                        </div>
+                    </div>
+                    <div class="preview-embed" id="proTwitchEmbed"></div>
+                    <div class="preview-timeline">
+                        <div class="pt-bar"><div class="pt-progress" id="ptProgress"></div></div>
+                        <div class="pt-markers" id="ptMarkers"></div>
+                    </div>
+                </div>
+
+                <div class="chat-column">
+                    <div class="cmd-card chat-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-comments"></i> Live Chat</h3>
+                            <div class="chat-mode-btns">
+                                <button class="cm-btn" onclick="modAction('slow')" title="Slow Mode"><i class="fas fa-clock"></i></button>
+                                <button class="cm-btn" onclick="modAction('sub')" title="Sub Only"><i class="fas fa-lock"></i></button>
+                                <button class="cm-btn" onclick="modAction('emote')" title="Emote Only"><i class="fas fa-face-laugh"></i></button>
+                            </div>
+                        </div>
+                        <div class="chat-embed" id="proChatEmbed"></div>
+                    </div>
+                    <div class="quick-chat-bar">
+                        <button class="qc-btn" onclick="proSendChat('Welkom bij de stream! 👋')">👋</button>
+                        <button class="qc-btn" onclick="proSendChat('Bedankt voor de follow! 💜')">💜</button>
+                        <button class="qc-btn" onclick="proSendChat('GG! 🏆')">🏆</button>
+                        <button class="qc-btn" onclick="proSendChat('LETS GO! 🚀')">🚀</button>
+                        <button class="qc-btn" onclick="proSendChat('Hype! 🔥')">🔥</button>
+                        <input type="text" class="qc-input" id="proQuickMsg" placeholder="Stuur een bericht..." onkeydown="if(event.key==='Enter')proSendChat(this.value)">
+                        <button class="qc-send" onclick="proSendChat(document.getElementById('proQuickMsg').value)"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity + Hype + Goals Row -->
+            <div class="activity-row">
+                <div class="cmd-card activity-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-bolt"></i> Activiteit</h3>
+                        <div class="activity-filters">
+                            <button class="af active" onclick="filterAct(this,'all')">Alles</button>
+                            <button class="af" onclick="filterAct(this,'follow')">Follows</button>
+                            <button class="af" onclick="filterAct(this,'sub')">Subs</button>
+                            <button class="af" onclick="filterAct(this,'donation')">Tips</button>
+                        </div>
+                    </div>
+                    <div class="activity-feed" id="activityFeed">
+                        <div class="act-item follow"><div class="act-icon"><i class="fas fa-heart"></i></div><div class="act-body"><strong>StreamFan99</strong> is nu een volger!</div><div class="act-time">nu</div></div>
+                        <div class="act-item sub"><div class="act-icon"><i class="fas fa-star"></i></div><div class="act-body"><strong>GamerNL</strong> subscribed! <span class="act-badge">Tier 1</span></div><div class="act-time">2m</div></div>
+                        <div class="act-item donation"><div class="act-icon"><i class="fas fa-coins"></i></div><div class="act-body"><strong>ProPlayer_X</strong> doneerde <span class="act-amount">€5.00</span></div><div class="act-time">5m</div></div>
+                        <div class="act-item raid"><div class="act-icon"><i class="fas fa-users"></i></div><div class="act-body"><strong>NeonRider</strong> raidde met <span class="act-amount">45 kijkers</span></div><div class="act-time">8m</div></div>
+                        <div class="act-item bits"><div class="act-icon"><i class="fas fa-gem"></i></div><div class="act-body"><strong>xGamer</strong> cheered <span class="act-amount">500 bits</span></div><div class="act-time">12m</div></div>
+                    </div>
+                </div>
+
+                <div class="cmd-card hype-card">
+                    <div class="card-header"><h3><i class="fas fa-fire-flame-curved"></i> Hype Train</h3></div>
+                    <div class="hype-display">
+                        <div class="hype-level-ring">
+                            <svg viewBox="0 0 120 120">
+                                <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="8"/>
+                                <circle cx="60" cy="60" r="54" fill="none" stroke="url(#hypeGrad)" stroke-width="8" stroke-dasharray="339" stroke-dashoffset="120" stroke-linecap="round" id="hypeRing"/>
+                                <defs><linearGradient id="hypeGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#a855f7"/><stop offset="50%" stop-color="#ec4899"/><stop offset="100%" stop-color="#f97316"/></linearGradient></defs>
+                            </svg>
+                            <div class="hype-level-num">3</div>
+                        </div>
+                        <div class="hype-stats">
+                            <div class="hs-item"><i class="fas fa-users"></i> 28 deelnemers</div>
+                            <div class="hs-item"><i class="fas fa-star"></i> 12 subs</div>
+                            <div class="hs-item"><i class="fas fa-gem"></i> 3.4K bits</div>
+                            <div class="hs-item"><i class="fas fa-clock"></i> 2:34 resterend</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cmd-card goals-card">
+                    <div class="card-header"><h3><i class="fas fa-trophy"></i> Doelen</h3></div>
+                    <div class="pro-goals">
+                        <div class="pro-goal">
+                            <div class="pg-header"><span>Volgers</span><span class="pg-nums">754 / 1000</span></div>
+                            <div class="pg-bar"><div class="pg-fill" style="width:75.4%"><span>75%</span></div></div>
+                        </div>
+                        <div class="pro-goal">
+                            <div class="pg-header"><span>Subs</span><span class="pg-nums">12 / 25</span></div>
+                            <div class="pg-bar"><div class="pg-fill sub" style="width:48%"><span>48%</span></div></div>
+                        </div>
+                        <div class="pro-goal">
+                            <div class="pg-header"><span>Donaties</span><span class="pg-nums">€85 / €200</span></div>
+                            <div class="pg-bar"><div class="pg-fill donation" style="width:42.5%"><span>42%</span></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alerts + Soundboard + Raid -->
+            <div class="tools-row">
+                <div class="cmd-card alerts-card">
+                    <div class="card-header"><h3><i class="fas fa-bell"></i> Alert Tester</h3></div>
+                    <div class="alert-test-grid">
+                        <button class="at-btn follow" onclick="testProAlert('follow')"><i class="fas fa-heart"></i> Follow</button>
+                        <button class="at-btn sub" onclick="testProAlert('sub')"><i class="fas fa-star"></i> Sub</button>
+                        <button class="at-btn donation" onclick="testProAlert('donation')"><i class="fas fa-coins"></i> Donatie</button>
+                        <button class="at-btn raid" onclick="testProAlert('raid')"><i class="fas fa-users"></i> Raid</button>
+                        <button class="at-btn bits" onclick="testProAlert('bits')"><i class="fas fa-gem"></i> Bits</button>
+                        <button class="at-btn giftsub" onclick="testProAlert('giftsub')"><i class="fas fa-gift"></i> Gift Sub</button>
+                    </div>
+                    <div class="alert-preview-area" id="proAlertPreview"></div>
+                </div>
+
+                <div class="cmd-card sound-card">
+                    <div class="card-header"><h3><i class="fas fa-volume-high"></i> Soundboard</h3></div>
+                    <div class="pro-soundboard">
+                        <button class="sb-btn" onclick="proSound(this)"><i class="fas fa-bullhorn"></i><span>Airhorn</span></button>
+                        <button class="sb-btn" onclick="proSound(this)"><i class="fas fa-hands-clapping"></i><span>Applaus</span></button>
+                        <button class="sb-btn" onclick="proSound(this)"><i class="fas fa-drum"></i><span>Drumroll</span></button>
+                        <button class="sb-btn" onclick="proSound(this)"><i class="fas fa-wand-magic-sparkles"></i><span>Tada</span></button>
+                        <button class="sb-btn" onclick="proSound(this)"><i class="fas fa-face-sad-tear"></i><span>Fail</span></button>
+                        <button class="sb-btn" onclick="proSound(this)"><i class="fas fa-crown"></i><span>Victory</span></button>
+                        <button class="sb-btn" onclick="proSound(this)"><i class="fas fa-ghost"></i><span>Suspense</span></button>
+                        <button class="sb-btn" onclick="proSound(this)"><i class="fas fa-bomb"></i><span>Boom</span></button>
+                        <button class="sb-btn" onclick="proSound(this)"><i class="fas fa-laugh-beam"></i><span>Lach</span></button>
+                        <button class="sb-btn" onclick="proSound(this)"><i class="fas fa-bell"></i><span>Ding</span></button>
+                    </div>
+                </div>
+
+                <div class="cmd-card raid-card">
+                    <div class="card-header"><h3><i class="fas fa-people-arrows"></i> Raid Center</h3></div>
+                    <div class="raid-targets">
+                        <div class="rt-item"><div class="rt-avatar">CS</div><div class="rt-info"><strong>CoolStreamer_NL</strong><span>Gaming • 23 kijkers</span></div><button class="rt-btn" onclick="proRaid('CoolStreamer_NL')">Raid</button></div>
+                        <div class="rt-item"><div class="rt-avatar">GM</div><div class="rt-info"><strong>GameMasterNL</strong><span>Just Chatting • 56 kijkers</span></div><button class="rt-btn" onclick="proRaid('GameMasterNL')">Raid</button></div>
+                        <div class="rt-item"><div class="rt-avatar">PH</div><div class="rt-info"><strong>PixelHero</strong><span>Creative • 12 kijkers</span></div><button class="rt-btn" onclick="proRaid('PixelHero')">Raid</button></div>
+                    </div>
+                    <div class="raid-custom-input">
+                        <input type="text" placeholder="Kanaal naam..." id="proRaidTarget">
+                        <button onclick="proRaid(document.getElementById('proRaidTarget').value)"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+
+                <div class="cmd-card chatbot-card">
+                    <div class="card-header"><h3><i class="fas fa-robot"></i> Chatbot</h3></div>
+                    <div class="pro-commands">
+                        <div class="pc-item"><code>!social</code><span>Check mijn socials</span><button><i class="fas fa-play"></i></button></div>
+                        <div class="pc-item"><code>!discord</code><span>Join de Discord</span><button><i class="fas fa-play"></i></button></div>
+                        <div class="pc-item"><code>!uptime</code><span>Stream uptime</span><button><i class="fas fa-play"></i></button></div>
+                        <div class="pc-item"><code>!game</code><span>Huidige game</span><button><i class="fas fa-play"></i></button></div>
+                    </div>
+                    <div class="pc-add">
+                        <input type="text" placeholder="!command" id="proCmdName">
+                        <input type="text" placeholder="Response..." id="proCmdResp">
+                        <button onclick="addProCmd()"><i class="fas fa-plus"></i></button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== STUDIO PAGE ========== -->
+        <section class="pro-page" id="pageStudio">
+            <div class="studio-layout">
+                <div class="studio-main">
+                    <div class="cmd-card">
+                        <div class="card-header"><h3><i class="fas fa-wand-magic-sparkles"></i> Scene Editor</h3></div>
+                        <div class="studio-canvas" id="studioCanvas">
+                            <div class="sc-element" style="top:60%;left:5%;background:rgba(168,85,247,0.3)"><i class="fas fa-video"></i> Webcam</div>
+                            <div class="sc-element" style="top:10%;left:70%;background:rgba(6,182,212,0.3)"><i class="fas fa-comments"></i> Chat</div>
+                            <div class="sc-element" style="top:5%;left:30%;background:rgba(236,72,153,0.3)"><i class="fas fa-bell"></i> Alerts</div>
+                        </div>
+                        <div class="studio-toolbar">
+                            <button onclick="addStudioEl('text')"><i class="fas fa-font"></i></button>
+                            <button onclick="addStudioEl('image')"><i class="fas fa-image"></i></button>
+                            <button onclick="addStudioEl('webcam')"><i class="fas fa-video"></i></button>
+                            <button onclick="addStudioEl('browser')"><i class="fas fa-globe"></i></button>
+                            <button onclick="addStudioEl('game')"><i class="fas fa-gamepad"></i></button>
+                            <button onclick="addStudioEl('screen')"><i class="fas fa-desktop"></i></button>
+                            <div class="toolbar-sep"></div>
+                            <button onclick="triggerFx('confetti')"><i class="fas fa-party-horn"></i></button>
+                            <button onclick="triggerFx('fireworks')"><i class="fas fa-burst"></i></button>
+                            <button onclick="triggerFx('snow')"><i class="fas fa-snowflake"></i></button>
+                            <button onclick="triggerFx('hearts')"><i class="fas fa-heart"></i></button>
+                        </div>
+                    </div>
+                    <div class="studio-bottom">
+                        <div class="cmd-card audio-card">
+                            <div class="card-header"><h3><i class="fas fa-sliders-h"></i> Audio Mixer</h3></div>
+                            <div class="pro-mixer">
+                                <div class="pm-ch"><div class="pm-label"><i class="fas fa-microphone"></i> Mic</div><div class="pm-meter"><div class="pm-fill" style="width:70%"></div></div><input type="range" min="0" max="100" value="80"><button class="pm-mute"><i class="fas fa-microphone"></i></button></div>
+                                <div class="pm-ch"><div class="pm-label"><i class="fas fa-desktop"></i> Desktop</div><div class="pm-meter"><div class="pm-fill" style="width:50%"></div></div><input type="range" min="0" max="100" value="60"><button class="pm-mute"><i class="fas fa-volume-up"></i></button></div>
+                                <div class="pm-ch"><div class="pm-label"><i class="fas fa-gamepad"></i> Game</div><div class="pm-meter"><div class="pm-fill" style="width:60%"></div></div><input type="range" min="0" max="100" value="70"><button class="pm-mute"><i class="fas fa-volume-up"></i></button></div>
+                                <div class="pm-ch"><div class="pm-label"><i class="fas fa-music"></i> Muziek</div><div class="pm-meter"><div class="pm-fill" style="width:30%"></div></div><input type="range" min="0" max="100" value="40"><button class="pm-mute"><i class="fas fa-volume-up"></i></button></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="studio-sidebar">
+                    <div class="cmd-card scenes-card">
+                        <div class="card-header"><h3><i class="fas fa-layer-group"></i> Scenes</h3></div>
+                        <div class="pro-scenes">
+                            <div class="ps-item active"><i class="fas fa-gamepad"></i> Gaming <span class="ps-live">LIVE</span></div>
+                            <div class="ps-item"><i class="fas fa-comments"></i> Just Chatting</div>
+                            <div class="ps-item"><i class="fas fa-clock"></i> Starting Soon</div>
+                            <div class="ps-item"><i class="fas fa-coffee"></i> BRB</div>
+                            <div class="ps-item"><i class="fas fa-hand-wave"></i> Ending</div>
+                        </div>
+                        <button class="pro-add-btn"><i class="fas fa-plus"></i> Nieuwe Scene</button>
+                    </div>
+                    <div class="cmd-card trans-card">
+                        <div class="card-header"><h3><i class="fas fa-shuffle"></i> Transitie</h3></div>
+                        <select class="pro-select"><option>Fade</option><option>Slide</option><option>Zoom</option><option>Stinger</option><option>Cut</option></select>
+                        <label class="pro-range-label">Duur: <span id="proTransDur">500</span>ms</label>
+                        <input type="range" min="100" max="3000" value="500" class="pro-range" oninput="document.getElementById('proTransDur').textContent=this.value">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== ANALYTICS PAGE ========== -->
+        <section class="pro-page" id="pageAnalytics">
+            <div class="analytics-header-row">
+                <div class="cmd-card stat-highlight"><div class="sh-icon" style="background:rgba(168,85,247,0.2);color:#a855f7"><i class="fas fa-eye"></i></div><div class="sh-info"><span class="sh-val">1,247</span><span class="sh-label">Totaal Kijkers (7d)</span></div></div>
+                <div class="cmd-card stat-highlight"><div class="sh-icon" style="background:rgba(236,72,153,0.2);color:#ec4899"><i class="fas fa-heart"></i></div><div class="sh-info"><span class="sh-val">+89</span><span class="sh-label">Nieuwe Volgers (7d)</span></div></div>
+                <div class="cmd-card stat-highlight"><div class="sh-icon" style="background:rgba(249,115,22,0.2);color:#f97316"><i class="fas fa-coins"></i></div><div class="sh-info"><span class="sh-val">€342</span><span class="sh-label">Revenue (7d)</span></div></div>
+                <div class="cmd-card stat-highlight"><div class="sh-icon" style="background:rgba(16,185,129,0.2);color:#10b981"><i class="fas fa-clock"></i></div><div class="sh-info"><span class="sh-val">28.5h</span><span class="sh-label">Stream Tijd (7d)</span></div></div>
+            </div>
+            <div class="analytics-graphs">
+                <div class="cmd-card"><div class="card-header"><h3><i class="fas fa-chart-area"></i> Kijkers Trend</h3></div><canvas id="proViewerChart" height="200"></canvas></div>
+                <div class="cmd-card"><div class="card-header"><h3><i class="fas fa-chart-bar"></i> Revenue Breakdown</h3></div><canvas id="proRevenueChart" height="200"></canvas></div>
+            </div>
+            <div class="analytics-details">
+                <div class="cmd-card"><div class="card-header"><h3><i class="fas fa-list-ol"></i> Top Supporters</h3></div>
+                    <div class="supporters-list">
+                        <div class="sup-item"><span class="sup-rank gold">1</span><span class="sup-name">ProPlayer_X</span><span class="sup-amount">€125.00</span></div>
+                        <div class="sup-item"><span class="sup-rank silver">2</span><span class="sup-name">GamerNL</span><span class="sup-amount">€67.50</span></div>
+                        <div class="sup-item"><span class="sup-rank bronze">3</span><span class="sup-name">NeonRider</span><span class="sup-amount">€45.00</span></div>
+                        <div class="sup-item"><span class="sup-rank">4</span><span class="sup-name">StreamFan99</span><span class="sup-amount">€32.00</span></div>
+                        <div class="sup-item"><span class="sup-rank">5</span><span class="sup-name">CoolViewer</span><span class="sup-amount">€28.50</span></div>
+                    </div>
+                </div>
+                <div class="cmd-card"><div class="card-header"><h3><i class="fas fa-calendar-check"></i> Stream Schema</h3></div>
+                    <div class="pro-schedule">
+                        <div class="psch-item today"><div class="psch-day">Vandaag</div><div class="psch-time">14:00 - 18:00</div><div class="psch-cat">Gaming</div></div>
+                        <div class="psch-item"><div class="psch-day">Morgen</div><div class="psch-time">20:00 - 23:00</div><div class="psch-cat">Just Chatting</div></div>
+                        <div class="psch-item"><div class="psch-day">Zondag</div><div class="psch-time">12:00 - 20:00</div><div class="psch-cat">Marathon</div></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== MONETIZE PAGE ========== -->
+        <section class="pro-page" id="pageMonetize">
+            <div class="monetize-overview">
+                <div class="cmd-card mo-highlight"><div class="mo-val">€342.50</div><div class="mo-label">Deze Maand</div></div>
+                <div class="cmd-card mo-highlight"><div class="mo-val">€1,245</div><div class="mo-label">Totaal</div></div>
+                <div class="cmd-card mo-highlight"><div class="mo-val">12</div><div class="mo-label">Active Subs</div></div>
+                <div class="cmd-card mo-highlight"><div class="mo-val">€28.54</div><div class="mo-label">Gem. per Stream</div></div>
+            </div>
+            <div class="monetize-grid">
+                <div class="cmd-card"><div class="card-header"><h3><i class="fas fa-star"></i> Subscriptions</h3></div>
+                    <div class="sub-tiers">
+                        <div class="st-item"><span class="st-tier">Tier 1</span><span class="st-price">€4.99</span><span class="st-count">8 subs</span></div>
+                        <div class="st-item"><span class="st-tier t2">Tier 2</span><span class="st-price">€9.99</span><span class="st-count">3 subs</span></div>
+                        <div class="st-item"><span class="st-tier t3">Tier 3</span><span class="st-price">€24.99</span><span class="st-count">1 sub</span></div>
+                    </div>
+                </div>
+                <div class="cmd-card"><div class="card-header"><h3><i class="fas fa-coins"></i> Donaties</h3></div>
+                    <div class="donation-settings">
+                        <div class="ds-item"><label>Min. Donatie</label><input type="number" value="1" min="1"> EUR</div>
+                        <div class="ds-item"><label>TTS Minimum</label><input type="number" value="5" min="1"> EUR</div>
+                        <div class="ds-item"><label>Max. Bericht Lengte</label><input type="number" value="200" min="50"> tekens</div>
+                    </div>
+                </div>
+                <div class="cmd-card"><div class="card-header"><h3><i class="fas fa-ad"></i> Ads</h3></div>
+                    <div class="ad-controls">
+                        <button class="sa-btn" onclick="proAd()"><i class="fas fa-play"></i> Start Ad Break (90s)</button>
+                        <label class="pro-toggle"><input type="checkbox" checked> Auto Ad Breaks</label>
+                        <label>Interval: <select class="pro-select"><option>30 min</option><option>45 min</option><option>60 min</option></select></label>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== COMMUNITY PAGE ========== -->
+        <section class="pro-page" id="pageCommunity">
+            <div class="community-grid">
+                <div class="cmd-card"><div class="card-header"><h3><i class="fas fa-shield-halved"></i> Moderatie</h3></div>
+                    <div class="pro-mod-grid">
+                        <button class="pm-btn" onclick="proMod(this,'slow')"><i class="fas fa-clock"></i> Slow Mode</button>
+                        <button class="pm-btn" onclick="proMod(this,'sub')"><i class="fas fa-lock"></i> Sub Only</button>
+                        <button class="pm-btn" onclick="proMod(this,'emote')"><i class="fas fa-face-laugh"></i> Emote Only</button>
+                        <button class="pm-btn" onclick="proMod(this,'followers')"><i class="fas fa-user-check"></i> Followers Only</button>
+                        <button class="pm-btn" onclick="proMod(this,'unique')"><i class="fas fa-fingerprint"></i> Unique</button>
+                        <button class="pm-btn" onclick="proMod(this,'clear')"><i class="fas fa-broom"></i> Clear Chat</button>
+                    </div>
+                    <div class="automod-section">
+                        <h4>AutoMod Level</h4>
+                        <input type="range" min="0" max="4" value="2" class="pro-range" id="proAutomod">
+                        <div class="am-labels"><span>Uit</span><span>Mild</span><span>Medium</span><span>Streng</span><span>Max</span></div>
+                    </div>
+                </div>
+                <div class="cmd-card"><div class="card-header"><h3><i class="fas fa-globe"></i> Multi-Platform</h3></div>
+                    <div class="pro-platforms">
+                        <div class="pp-item connected"><i class="fab fa-twitch"></i><span>Twitch</span><span class="pp-status on">Verbonden</span></div>
+                        <div class="pp-item"><i class="fab fa-youtube"></i><span>YouTube</span><button class="pp-connect">Verbinden</button></div>
+                        <div class="pp-item"><i class="fab fa-tiktok"></i><span>TikTok Live</span><button class="pp-connect">Verbinden</button></div>
+                        <div class="pp-item"><i class="fab fa-facebook"></i><span>Facebook</span><button class="pp-connect">Verbinden</button></div>
+                        <div class="pp-item"><i class="fas fa-k"></i><span>Kick</span><button class="pp-connect">Verbinden</button></div>
+                    </div>
+                </div>
+                <div class="cmd-card"><div class="card-header"><h3><i class="fas fa-crystal-ball"></i> Predictions</h3></div>
+                    <div class="pro-pred">
+                        <input type="text" class="pro-input" placeholder="Stel een vraag..." id="proPredQ">
+                        <div class="pred-opts"><input type="text" class="pro-input" placeholder="Ja!" value="Ja!"><input type="text" class="pro-input" placeholder="Nee..." value="Nee..."></div>
+                        <button class="sa-btn primary full" onclick="startProPred()"><i class="fas fa-play"></i> Start Prediction</button>
+                    </div>
+                </div>
+                <div class="cmd-card"><div class="card-header"><h3><i class="fas fa-poll"></i> Polls</h3></div>
+                    <div class="pro-poll">
+                        <input type="text" class="pro-input" placeholder="Stel een vraag..." id="proPollQ">
+                        <div class="poll-opts" id="proPollOpts"><input type="text" class="pro-input" placeholder="Optie 1"><input type="text" class="pro-input" placeholder="Optie 2"></div>
+                        <button class="sa-btn" onclick="addProPollOpt()"><i class="fas fa-plus"></i> Optie</button>
+                        <button class="sa-btn primary full" onclick="startProPoll()"><i class="fas fa-play"></i> Start Poll</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Notification Toast -->
+    <div class="pro-toast" id="proToast"></div>
+
+    <script src="https://embed.twitch.tv/embed/v1.js"></script>
+    <script src="pro.js"></script>
+</body>
+</html>
