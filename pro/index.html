@@ -35,6 +35,7 @@
             <a href="#" class="tn-link" data-page="analytics"><i class="fas fa-chart-line"></i> Analytics</a>
             <a href="#" class="tn-link" data-page="monetize"><i class="fas fa-coins"></i> Monetize</a>
             <a href="#" class="tn-link" data-page="community"><i class="fas fa-users"></i> Community</a>
+            <a href="#" class="tn-link" data-page="tools"><i class="fas fa-toolbox"></i> Tools</a>
         </nav>
         <div class="topbar-right">
             <div class="live-indicator" id="liveIndicator">
@@ -461,6 +462,234 @@
                         <div class="poll-opts" id="proPollOpts"><input type="text" class="pro-input" placeholder="Optie 1"><input type="text" class="pro-input" placeholder="Optie 2"></div>
                         <button class="sa-btn" onclick="addProPollOpt()"><i class="fas fa-plus"></i> Optie</button>
                         <button class="sa-btn primary full" onclick="startProPoll()"><i class="fas fa-play"></i> Start Poll</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- ========== TOOLS PAGE ========== -->
+        <section class="pro-page" id="pageTools">
+            <!-- OBS Connection Status -->
+            <div class="tools-connect-row">
+                <div class="cmd-card obs-connect-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-plug"></i> OBS WebSocket</h3>
+                        <span class="card-badge" id="obsStatusBadge">Niet verbonden</span>
+                    </div>
+                    <div class="obs-connect-form">
+                        <div class="sif-row">
+                            <div class="sif-group">
+                                <label>WebSocket URL</label>
+                                <input type="text" id="obsWsUrl" placeholder="ws://localhost:4455" value="ws://localhost:4455">
+                            </div>
+                            <div class="sif-group">
+                                <label>Wachtwoord</label>
+                                <input type="password" id="obsWsPassword" placeholder="OBS WebSocket wachtwoord">
+                            </div>
+                        </div>
+                        <div class="stream-actions">
+                            <button class="sa-btn primary" id="obsConnectBtn" onclick="obsConnect()"><i class="fas fa-plug"></i> Verbinden</button>
+                            <button class="sa-btn" id="obsDisconnectBtn" onclick="obsDisconnect()" style="display:none"><i class="fas fa-unlink"></i> Verbreken</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="cmd-card obs-status-card">
+                    <div class="card-header"><h3><i class="fas fa-signal"></i> OBS Status</h3></div>
+                    <div class="obs-status-grid">
+                        <div class="obs-stat"><i class="fas fa-broadcast-tower"></i><span id="obsStreamStatus">Offline</span><small>Stream</small></div>
+                        <div class="obs-stat"><i class="fas fa-circle"></i><span id="obsRecordStatus">Gestopt</span><small>Opname</small></div>
+                        <div class="obs-stat"><i class="fas fa-layer-group"></i><span id="obsCurrentScene">—</span><small>Scene</small></div>
+                        <div class="obs-stat"><i class="fas fa-microphone"></i><span id="obsMicStatus">—</span><small>Mic</small></div>
+                        <div class="obs-stat"><i class="fas fa-tachometer-alt"></i><span id="obsCpuUsage">—</span><small>CPU</small></div>
+                        <div class="obs-stat"><i class="fas fa-memory"></i><span id="obsMemUsage">—</span><small>RAM</small></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OBS Controls -->
+            <div class="obs-controls-row">
+                <div class="cmd-card">
+                    <div class="card-header"><h3><i class="fas fa-layer-group"></i> OBS Scenes</h3></div>
+                    <div class="obs-scenes-list" id="obsScenesList">
+                        <div class="obs-no-data"><i class="fas fa-plug"></i> Verbind OBS om scenes te zien</div>
+                    </div>
+                </div>
+                <div class="cmd-card">
+                    <div class="card-header"><h3><i class="fas fa-sliders-h"></i> OBS Audio</h3></div>
+                    <div class="obs-audio-list" id="obsAudioList">
+                        <div class="obs-no-data"><i class="fas fa-plug"></i> Verbind OBS om audio te zien</div>
+                    </div>
+                </div>
+                <div class="cmd-card">
+                    <div class="card-header"><h3><i class="fas fa-video"></i> OBS Sources</h3></div>
+                    <div class="obs-sources-list" id="obsSourcesList">
+                        <div class="obs-no-data"><i class="fas fa-plug"></i> Verbind OBS om bronnen te zien</div>
+                    </div>
+                </div>
+                <div class="cmd-card">
+                    <div class="card-header"><h3><i class="fas fa-gamepad"></i> OBS Bediening</h3></div>
+                    <div class="obs-quick-actions">
+                        <button class="sa-btn" onclick="obsAction('startStream')"><i class="fas fa-broadcast-tower"></i> Start Stream</button>
+                        <button class="sa-btn" onclick="obsAction('stopStream')"><i class="fas fa-stop"></i> Stop Stream</button>
+                        <button class="sa-btn" onclick="obsAction('startRecord')"><i class="fas fa-circle" style="color:#ef4444"></i> Start Opname</button>
+                        <button class="sa-btn" onclick="obsAction('stopRecord')"><i class="fas fa-square"></i> Stop Opname</button>
+                        <button class="sa-btn" onclick="obsAction('pauseRecord')"><i class="fas fa-pause"></i> Pauze Opname</button>
+                        <button class="sa-btn" onclick="obsAction('toggleVCam')"><i class="fas fa-camera"></i> Virtual Cam</button>
+                        <button class="sa-btn" onclick="obsAction('toggleStudioMode')"><i class="fas fa-columns"></i> Studio Mode</button>
+                        <button class="sa-btn" onclick="obsAction('screenshot')"><i class="fas fa-camera-retro"></i> Screenshot</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Extra Tools Row -->
+            <div class="extra-tools-row">
+                <div class="cmd-card">
+                    <div class="card-header"><h3><i class="fab fa-discord"></i> Discord Bot</h3></div>
+                    <div class="tool-integration">
+                        <p class="tool-desc">Stuur automatisch meldingen naar je Discord server wanneer je live gaat.</p>
+                        <div class="sif-group">
+                            <label>Discord Webhook URL</label>
+                            <input type="text" id="discordWebhook" placeholder="https://discord.com/api/webhooks/...">
+                        </div>
+                        <div class="tool-toggles">
+                            <label class="pro-toggle"><input type="checkbox" checked> Live melding</label>
+                            <label class="pro-toggle"><input type="checkbox"> Stream titel wijziging</label>
+                            <label class="pro-toggle"><input type="checkbox" checked> Clip gemaakt</label>
+                        </div>
+                        <button class="sa-btn" onclick="testDiscordWebhook()"><i class="fas fa-paper-plane"></i> Test Webhook</button>
+                    </div>
+                </div>
+
+                <div class="cmd-card">
+                    <div class="card-header"><h3><i class="fas fa-wand-sparkles"></i> Streamlabs</h3></div>
+                    <div class="tool-integration">
+                        <p class="tool-desc">Gebruik Streamlabs voor alerts, donaties en widgets op je stream.</p>
+                        <div class="tool-links">
+                            <a href="https://streamlabs.com/dashboard" target="_blank" class="tool-link"><i class="fas fa-external-link-alt"></i> Streamlabs Dashboard</a>
+                            <a href="https://streamlabs.com/widgets/alert-box" target="_blank" class="tool-link"><i class="fas fa-bell"></i> Alert Box URL</a>
+                            <a href="https://streamlabs.com/widgets/event-list" target="_blank" class="tool-link"><i class="fas fa-list"></i> Event List URL</a>
+                            <a href="https://streamlabs.com/widgets/chat-box" target="_blank" class="tool-link"><i class="fas fa-comments"></i> Chat Box URL</a>
+                        </div>
+                        <div class="sif-group" style="margin-top:10px">
+                            <label>Alert Box URL (Browser Source)</label>
+                            <input type="text" id="slAlertUrl" placeholder="https://streamlabs.com/alert-box/v3/...">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cmd-card">
+                    <div class="card-header"><h3><i class="fas fa-bolt"></i> StreamElements</h3></div>
+                    <div class="tool-integration">
+                        <p class="tool-desc">StreamElements voor overlay, chatbot en loyalty systeem.</p>
+                        <div class="tool-links">
+                            <a href="https://streamelements.com/dashboard" target="_blank" class="tool-link"><i class="fas fa-external-link-alt"></i> SE Dashboard</a>
+                            <a href="https://streamelements.com/dashboard/overlays" target="_blank" class="tool-link"><i class="fas fa-layer-group"></i> Overlays</a>
+                            <a href="https://streamelements.com/dashboard/bot" target="_blank" class="tool-link"><i class="fas fa-robot"></i> Chatbot</a>
+                        </div>
+                        <div class="sif-group" style="margin-top:10px">
+                            <label>Overlay URL (Browser Source)</label>
+                            <input type="text" id="seOverlayUrl" placeholder="https://streamelements.com/overlay/...">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hotkeys + Timer + Auto Messages -->
+            <div class="extra-tools-row">
+                <div class="cmd-card">
+                    <div class="card-header"><h3><i class="fas fa-keyboard"></i> Hotkeys</h3></div>
+                    <div class="hotkeys-list">
+                        <div class="hotkey-item"><kbd>F1</kbd><span>Mute/Unmute Mic</span></div>
+                        <div class="hotkey-item"><kbd>F2</kbd><span>Mute/Unmute Desktop</span></div>
+                        <div class="hotkey-item"><kbd>F3</kbd><span>Start/Stop Opname</span></div>
+                        <div class="hotkey-item"><kbd>F5</kbd><span>Scene: Gaming</span></div>
+                        <div class="hotkey-item"><kbd>F6</kbd><span>Scene: Just Chatting</span></div>
+                        <div class="hotkey-item"><kbd>F7</kbd><span>Scene: BRB</span></div>
+                        <div class="hotkey-item"><kbd>F9</kbd><span>Maak Clip</span></div>
+                        <div class="hotkey-item"><kbd>F12</kbd><span>Screenshot</span></div>
+                    </div>
+                </div>
+
+                <div class="cmd-card">
+                    <div class="card-header"><h3><i class="fas fa-stopwatch"></i> Stream Timer</h3></div>
+                    <div class="stream-timer-panel">
+                        <div class="timer-display" id="toolTimer">00:00:00</div>
+                        <div class="timer-controls">
+                            <button class="sa-btn" onclick="startToolTimer()"><i class="fas fa-play"></i> Start</button>
+                            <button class="sa-btn" onclick="pauseToolTimer()"><i class="fas fa-pause"></i> Pauze</button>
+                            <button class="sa-btn" onclick="resetToolTimer()"><i class="fas fa-undo"></i> Reset</button>
+                        </div>
+                        <div class="sif-group" style="margin-top:10px">
+                            <label>Countdown (min)</label>
+                            <input type="number" id="countdownMin" value="0" min="0" placeholder="0 = stopwatch">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cmd-card">
+                    <div class="card-header"><h3><i class="fas fa-robot"></i> Auto Berichten</h3></div>
+                    <div class="auto-messages-panel">
+                        <div class="am-item"><input type="text" class="pro-input" value="Vergeet niet te volgen! 💜" id="autoMsg1"><input type="number" class="pro-input" style="width:60px" value="10" title="Interval (min)"><label class="pro-toggle"><input type="checkbox"> Actief</label></div>
+                        <div class="am-item"><input type="text" class="pro-input" value="Join de Discord! discord.gg/..." id="autoMsg2"><input type="number" class="pro-input" style="width:60px" value="15" title="Interval (min)"><label class="pro-toggle"><input type="checkbox"> Actief</label></div>
+                        <div class="am-item"><input type="text" class="pro-input" value="Laat een like achter! 👍" id="autoMsg3"><input type="number" class="pro-input" style="width:60px" value="20" title="Interval (min)"><label class="pro-toggle"><input type="checkbox"> Actief</label></div>
+                        <button class="sa-btn" onclick="saveAutoMessages()" style="margin-top:8px"><i class="fas fa-save"></i> Opslaan</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Setup Guide -->
+            <div class="setup-guide-row">
+                <div class="cmd-card setup-card">
+                    <div class="card-header"><h3><i class="fas fa-book"></i> Setup Guide — Alles Verbinden</h3></div>
+                    <div class="setup-steps">
+                        <div class="setup-step">
+                            <div class="step-num">1</div>
+                            <div class="step-content">
+                                <h4><i class="fas fa-download"></i> OBS Studio Installeren</h4>
+                                <p>Download <strong>OBS Studio</strong> van <a href="https://obsproject.com" target="_blank">obsproject.com</a>. Installeer en open OBS.</p>
+                            </div>
+                        </div>
+                        <div class="setup-step">
+                            <div class="step-num">2</div>
+                            <div class="step-content">
+                                <h4><i class="fas fa-plug"></i> OBS WebSocket Activeren</h4>
+                                <p>In OBS ga naar <strong>Tools → WebSocket Server Settings</strong>. Vink <strong>"Enable WebSocket Server"</strong> aan. Stel een wachtwoord in en onthoud poort <strong>4455</strong> (standaard).</p>
+                            </div>
+                        </div>
+                        <div class="setup-step">
+                            <div class="step-num">3</div>
+                            <div class="step-content">
+                                <h4><i class="fas fa-link"></i> NeonStream Verbinden met OBS</h4>
+                                <p>Vul hierboven <strong>ws://localhost:4455</strong> in als URL en je wachtwoord. Klik <strong>"Verbinden"</strong>. Je kunt nu scenes wisselen, stream starten/stoppen, en audio bedienen vanuit NeonStream!</p>
+                            </div>
+                        </div>
+                        <div class="setup-step">
+                            <div class="step-num">4</div>
+                            <div class="step-content">
+                                <h4><i class="fas fa-key"></i> Twitch Stream Key in OBS</h4>
+                                <p>In OBS ga naar <strong>Settings → Stream</strong>. Kies <strong>Twitch</strong> als service. Klik <strong>"Use Stream Key"</strong> en plak je stream key van <a href="https://dashboard.twitch.tv/settings/stream" target="_blank">Twitch Dashboard</a>.</p>
+                            </div>
+                        </div>
+                        <div class="setup-step">
+                            <div class="step-num">5</div>
+                            <div class="step-content">
+                                <h4><i class="fas fa-bell"></i> Alerts Toevoegen (Streamlabs/SE)</h4>
+                                <p>Maak een account op <a href="https://streamlabs.com" target="_blank">Streamlabs</a> of <a href="https://streamelements.com" target="_blank">StreamElements</a>. Kopieer je <strong>Alert Box URL</strong>. In OBS: voeg een <strong>Browser Source</strong> toe en plak de URL.</p>
+                            </div>
+                        </div>
+                        <div class="setup-step">
+                            <div class="step-num">6</div>
+                            <div class="step-content">
+                                <h4><i class="fab fa-discord"></i> Discord Webhook</h4>
+                                <p>In je Discord server: <strong>Server Settings → Integrations → Webhooks → New Webhook</strong>. Kopieer de URL en plak hierboven. NeonStream stuurt automatisch een melding wanneer je live gaat.</p>
+                            </div>
+                        </div>
+                        <div class="setup-step">
+                            <div class="step-num">7</div>
+                            <div class="step-content">
+                                <h4><i class="fas fa-rocket"></i> Go Live!</h4>
+                                <p>Alles staat klaar! Klik <strong>"Start Streaming"</strong> in OBS of gebruik de <strong>"Start Stream"</strong> knop hier in NeonStream. Je stream verschijnt automatisch op Twitch en alle data wordt real-time bijgewerkt.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

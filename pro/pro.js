@@ -493,6 +493,353 @@ function toast(msg) {
     setTimeout(() => t.classList.remove('show'), 4000);
 }
 
+// ===== OBS WEBSOCKET =====
+let obsWs = null;
+let obsConnected = false;
+let obsReqId = 1;
+let obsPendingRequests = {};
+
+function obsConnect() {
+    const url = document.getElementById('obsWsUrl').value || 'ws://localhost:4455';
+    const password = document.getElementById('obsWsPassword').value;
+
+    try {
+        obsWs = new WebSocket(url);
+    } catch(e) {
+        toast('⚠ Kan niet verbinden met OBS — controleer URL');
+        return;
+    }
+
+    obsWs.onopen = () => {
+        toast('🔌 Verbinden met OBS...');
+    };
+
+    obsWs.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+
+        if (msg.op === 0) {
+            // Hello message — authenticate
+            const authPayload = { op: 1, d: { rpcVersion: 1 } };
+            if (msg.d.authentication && password) {
+                // OBS requires auth
+                const { challenge, salt } = msg.d.authentication;
+                hashOBSAuth(password, salt, challenge).then(auth => {
+                    authPayload.d.authentication = auth;
+                    obsWs.send(JSON.stringify(authPayload));
+                });
+            } else {
+                obsWs.send(JSON.stringify(authPayload));
+            }
+        } else if (msg.op === 2) {
+            // Identified — connected!
+            obsConnected = true;
+            updateOBSUI(true);
+            toast('✅ OBS Verbonden!');
+            obsGetScenes();
+            obsGetAudioSources();
+            obsGetStatus();
+            setInterval(obsGetStatus, 5000);
+        } else if (msg.op === 5) {
+            // Event
+            handleOBSEvent(msg.d);
+        } else if (msg.op === 7) {
+            // Request response
+            const id = msg.d.requestId;
+            if (obsPendingRequests[id]) {
+                obsPendingRequests[id](msg.d);
+                delete obsPendingRequests[id];
+            }
+        }
+    };
+
+    obsWs.onclose = () => {
+        obsConnected = false;
+        updateOBSUI(false);
+        if (obsWs) toast('🔌 OBS verbinding verbroken');
+    };
+
+    obsWs.onerror = () => {
+        toast('⚠ OBS verbindingsfout — is OBS open en WebSocket actief?');
+    };
+}
+
+async function hashOBSAuth(password, salt, challenge) {
+    const enc = new TextEncoder();
+    const secret1 = await crypto.subtle.digest('SHA-256', enc.encode(password + salt));
+    const b64secret = btoa(String.fromCharCode(...new Uint8Array(secret1)));
+    const secret2 = await crypto.subtle.digest('SHA-256', enc.encode(b64secret + challenge));
+    return btoa(String.fromCharCode(...new Uint8Array(secret2)));
+}
+
+function obsDisconnect() {
+    if (obsWs) { obsWs.close(); obsWs = null; }
+    obsConnected = false;
+    updateOBSUI(false);
+    toast('OBS verbinding verbroken');
+}
+
+function obsSendRequest(requestType, requestData = {}) {
+    return new Promise((resolve) => {
+        if (!obsWs || !obsConnected) { resolve(null); return; }
+        const id = 'req_' + (obsReqId++);
+        obsPendingRequests[id] = resolve;
+        obsWs.send(JSON.stringify({
+            op: 6,
+            d: { requestType, requestId: id, requestData }
+        }));
+        setTimeout(() => { if (obsPendingRequests[id]) { delete obsPendingRequests[id]; resolve(null); } }, 5000);
+    });
+}
+
+function updateOBSUI(connected) {
+    const badge = document.getElementById('obsStatusBadge');
+    const connectBtn = document.getElementById('obsConnectBtn');
+    const disconnectBtn = document.getElementById('obsDisconnectBtn');
+    if (badge) {
+        badge.textContent = connected ? 'Verbonden' : 'Niet verbonden';
+        badge.className = 'card-badge ' + (connected ? 'connected' : 'offline');
+    }
+    if (connectBtn) connectBtn.style.display = connected ? 'none' : '';
+    if (disconnectBtn) disconnectBtn.style.display = connected ? '' : 'none';
+}
+
+async function obsGetScenes() {
+    const res = await obsSendRequest('GetSceneList');
+    if (!res || !res.responseData) return;
+    const list = document.getElementById('obsScenesList');
+    const scenes = res.responseData.scenes || [];
+    const current = res.responseData.currentProgramSceneName;
+    list.innerHTML = '';
+    scenes.reverse().forEach(scene => {
+        const div = document.createElement('div');
+        div.className = 'obs-scene-item' + (scene.sceneName === current ? ' active' : '');
+        div.innerHTML = `<i class="fas fa-layer-group"></i> ${scene.sceneName}${scene.sceneName === current ? '<span class="scene-live">ACTIEF</span>' : ''}`;
+        div.onclick = () => obsSetScene(scene.sceneName);
+        list.appendChild(div);
+    });
+}
+
+async function obsSetScene(name) {
+    await obsSendRequest('SetCurrentProgramScene', { sceneName: name });
+    toast(`🎬 Scene: ${name}`);
+    obsGetScenes();
+}
+
+async function obsGetAudioSources() {
+    const res = await obsSendRequest('GetInputList');
+    if (!res || !res.responseData) return;
+    const list = document.getElementById('obsAudioList');
+    const inputs = res.responseData.inputs || [];
+    const audioInputs = inputs.filter(i =>
+        i.inputKind?.includes('wasapi') || i.inputKind?.includes('pulse') ||
+        i.inputKind?.includes('coreaudio') || i.inputKind?.includes('alsa') ||
+        i.inputKind?.includes('audio')
+    );
+
+    if (audioInputs.length === 0) {
+        list.innerHTML = '<div class="obs-no-data"><i class="fas fa-volume-mute"></i> Geen audio bronnen gevonden</div>';
+        return;
+    }
+    list.innerHTML = '';
+    for (const input of audioInputs) {
+        const volRes = await obsSendRequest('GetInputVolume', { inputName: input.inputName });
+        const muteRes = await obsSendRequest('GetInputMute', { inputName: input.inputName });
+        const vol = volRes?.responseData?.inputVolumeDb ?? 0;
+        const muted = muteRes?.responseData?.inputMuted ?? false;
+        const pct = Math.round(Math.max(0, Math.min(100, (vol + 60) / 60 * 100)));
+
+        const div = document.createElement('div');
+        div.className = 'obs-audio-item';
+        div.innerHTML = `<span>${input.inputName}</span><input type="range" min="0" max="100" value="${pct}" onchange="obsSetVolume('${input.inputName.replace(/'/g,"\\'")}', this.value)"><button class="${muted ? 'muted' : ''}" onclick="obsToggleMute('${input.inputName.replace(/'/g,"\\'")}', this)" title="${muted ? 'Unmute' : 'Mute'}"><i class="fas ${muted ? 'fa-volume-mute' : 'fa-volume-up'}"></i></button>`;
+        list.appendChild(div);
+    }
+}
+
+async function obsSetVolume(name, pct) {
+    const db = (pct / 100) * 60 - 60;
+    await obsSendRequest('SetInputVolume', { inputName: name, inputVolumeDb: db });
+}
+
+async function obsToggleMute(name, btn) {
+    await obsSendRequest('ToggleInputMute', { inputName: name });
+    const res = await obsSendRequest('GetInputMute', { inputName: name });
+    const muted = res?.responseData?.inputMuted ?? false;
+    btn.className = muted ? 'muted' : '';
+    btn.innerHTML = `<i class="fas ${muted ? 'fa-volume-mute' : 'fa-volume-up'}"></i>`;
+}
+
+async function obsGetStatus() {
+    if (!obsConnected) return;
+    const streamRes = await obsSendRequest('GetStreamStatus');
+    const recordRes = await obsSendRequest('GetRecordStatus');
+    const statsRes = await obsSendRequest('GetStats');
+    const sceneRes = await obsSendRequest('GetCurrentProgramScene');
+
+    if (streamRes?.responseData) {
+        const s = streamRes.responseData;
+        updateEl('obsStreamStatus', s.outputActive ? `Live (${s.outputTimecode?.split('.')[0] || ''})` : 'Offline');
+        const el = document.querySelector('#obsStreamStatus')?.parentElement;
+        if (el) { el.className = 'obs-stat' + (s.outputActive ? ' active' : ''); }
+    }
+    if (recordRes?.responseData) {
+        const r = recordRes.responseData;
+        updateEl('obsRecordStatus', r.outputActive ? `Opname (${r.outputTimecode?.split('.')[0] || ''})` : 'Gestopt');
+        const el = document.querySelector('#obsRecordStatus')?.parentElement;
+        if (el) { el.className = 'obs-stat' + (r.outputActive ? ' error' : ''); }
+    }
+    if (statsRes?.responseData) {
+        const st = statsRes.responseData;
+        updateEl('obsCpuUsage', (st.cpuUsage || 0).toFixed(1) + '%');
+        updateEl('obsMemUsage', ((st.memoryUsage || 0) / 1024).toFixed(0) + ' GB');
+    }
+    if (sceneRes?.responseData) {
+        updateEl('obsCurrentScene', sceneRes.responseData.currentProgramSceneName || '—');
+    }
+}
+
+function handleOBSEvent(eventData) {
+    const type = eventData.eventType;
+    if (type === 'CurrentProgramSceneChanged') {
+        obsGetScenes();
+        updateEl('obsCurrentScene', eventData.eventData?.sceneName || '—');
+    } else if (type === 'StreamStateChanged') {
+        obsGetStatus();
+    } else if (type === 'RecordStateChanged') {
+        obsGetStatus();
+    } else if (type === 'InputVolumeChanged' || type === 'InputMuteStateChanged') {
+        obsGetAudioSources();
+    }
+}
+
+async function obsAction(action) {
+    if (!obsConnected) { toast('⚠ Verbind eerst met OBS'); return; }
+    const actions = {
+        startStream: ['StartStream', 'Stream gestart! 🔴'],
+        stopStream: ['StopStream', 'Stream gestopt'],
+        startRecord: ['StartRecord', 'Opname gestart 🔴'],
+        stopRecord: ['StopRecord', 'Opname gestopt'],
+        pauseRecord: ['PauseRecord', 'Opname gepauzeerd'],
+        toggleVCam: ['ToggleVirtualCam', 'Virtual Cam toggled'],
+        toggleStudioMode: ['SetStudioModeEnabled', 'Studio Mode toggled'],
+        screenshot: ['SaveSourceScreenshot', 'Screenshot opgeslagen 📸']
+    };
+    const [reqType, msg] = actions[action] || ['', ''];
+    if (!reqType) return;
+
+    if (action === 'toggleStudioMode') {
+        const res = await obsSendRequest('GetStudioModeEnabled');
+        const enabled = res?.responseData?.studioModeEnabled ?? false;
+        await obsSendRequest('SetStudioModeEnabled', { studioModeEnabled: !enabled });
+    } else if (action === 'screenshot') {
+        const sceneRes = await obsSendRequest('GetCurrentProgramScene');
+        const sceneName = sceneRes?.responseData?.currentProgramSceneName;
+        if (sceneName) {
+            await obsSendRequest('SaveSourceScreenshot', {
+                sourceName: sceneName,
+                imageFormat: 'png',
+                imageFilePath: `C:/Users/${navigator.userAgent.includes('Windows') ? 'Public' : ''}/NeonStream_Screenshot_${Date.now()}.png`
+            });
+        }
+    } else {
+        await obsSendRequest(reqType);
+    }
+    toast(msg);
+    setTimeout(obsGetStatus, 1000);
+}
+
+// ===== DISCORD WEBHOOK =====
+async function testDiscordWebhook() {
+    const url = document.getElementById('discordWebhook').value;
+    if (!url || !url.includes('discord.com/api/webhooks')) {
+        toast('⚠ Voer een geldige Discord webhook URL in');
+        return;
+    }
+    try {
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                embeds: [{
+                    title: '🔴 NeonStream — Test Melding',
+                    description: `**${channel}** is nu LIVE op Twitch!\n\nDit is een test melding van NeonStream PRO.`,
+                    color: 0x9146FF,
+                    thumbnail: { url: data.twitchUser?.profile_image_url || '' },
+                    footer: { text: 'NeonStream PRO • Streaming Command Center' },
+                    timestamp: new Date().toISOString()
+                }]
+            })
+        });
+        if (res.ok || res.status === 204) {
+            toast('✅ Discord webhook test verzonden!');
+        } else {
+            toast('⚠ Webhook fout — controleer de URL');
+        }
+    } catch(e) {
+        toast('⚠ Kon webhook niet bereiken');
+    }
+}
+
+// ===== STREAM TIMER =====
+let toolTimerInterval = null;
+let toolTimerSeconds = 0;
+let toolTimerRunning = false;
+
+function startToolTimer() {
+    if (toolTimerRunning) return;
+    const countdown = parseInt(document.getElementById('countdownMin')?.value || 0);
+    if (countdown > 0 && toolTimerSeconds === 0) toolTimerSeconds = countdown * 60;
+    toolTimerRunning = true;
+    toolTimerInterval = setInterval(() => {
+        if (countdown > 0) {
+            toolTimerSeconds--;
+            if (toolTimerSeconds <= 0) { toolTimerSeconds = 0; pauseToolTimer(); toast('⏰ Timer afgelopen!'); }
+        } else {
+            toolTimerSeconds++;
+        }
+        updateTimerDisplay();
+    }, 1000);
+    toast('⏱ Timer gestart');
+}
+
+function pauseToolTimer() {
+    toolTimerRunning = false;
+    clearInterval(toolTimerInterval);
+}
+
+function resetToolTimer() {
+    pauseToolTimer();
+    toolTimerSeconds = 0;
+    updateTimerDisplay();
+}
+
+function updateTimerDisplay() {
+    const h = Math.floor(toolTimerSeconds / 3600);
+    const m = Math.floor((toolTimerSeconds % 3600) / 60);
+    const s = toolTimerSeconds % 60;
+    updateEl('toolTimer', `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`);
+}
+
+// ===== AUTO MESSAGES =====
+let autoMsgIntervals = [];
+
+function saveAutoMessages() {
+    autoMsgIntervals.forEach(id => clearInterval(id));
+    autoMsgIntervals = [];
+
+    document.querySelectorAll('.am-item').forEach(item => {
+        const msg = item.querySelector('.pro-input')?.value;
+        const min = parseInt(item.querySelectorAll('.pro-input')[1]?.value || 10);
+        const active = item.querySelector('input[type="checkbox"]')?.checked;
+        if (active && msg && min > 0) {
+            const id = setInterval(() => {
+                if (isLive) proSendChat(msg);
+            }, min * 60000);
+            autoMsgIntervals.push(id);
+        }
+    });
+    toast('💾 Auto berichten opgeslagen');
+}
+
 // CSS animations
 const style = document.createElement('style');
 style.textContent = `
