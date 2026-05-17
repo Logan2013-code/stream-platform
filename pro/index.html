@@ -9,6 +9,25 @@
     <link rel="stylesheet" href="pro.css">
 </head>
 <body>
+    <!-- LICENSE GATE -->
+    <div class="license-gate" id="licenseGate">
+        <div class="license-card">
+            <div class="license-logo">
+                <div class="logo-icon" style="width:56px;height:56px;font-size:1.6rem"><i class="fas fa-bolt"></i></div>
+                <h1>NeonStream <span class="logo-badge" style="font-size:0.7rem;padding:4px 10px">PRO</span></h1>
+            </div>
+            <p class="license-desc">Voer je license key in om NeonStream PRO te activeren</p>
+            <div class="license-input-wrap">
+                <input type="text" id="licenseInput" placeholder="XXXX-XXXX-XXXX-XXXX" class="license-input" onkeydown="if(event.key==='Enter')activateLicense()">
+                <button class="license-btn" onclick="activateLicense()"><i class="fas fa-unlock"></i> Activeren</button>
+            </div>
+            <div class="license-error" id="licenseError"></div>
+            <p class="license-footer">Nog geen key? Neem contact op met de admin.</p>
+        </div>
+    </div>
+
+    <!-- PRO APP -->
+    <div id="proApp" style="display:none">
     <!-- Animated Background -->
     <div class="pro-bg">
         <div class="bg-grid"></div>
@@ -698,6 +717,8 @@
 
     <!-- Notification Toast -->
     <div class="pro-toast" id="proToast"></div>
+
+    </div><!-- /proApp -->
 
     <script src="https://embed.twitch.tv/embed/v1.js"></script>
     <script src="pro.js"></script>
